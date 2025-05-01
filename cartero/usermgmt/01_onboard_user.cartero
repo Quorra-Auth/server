@@ -1,0 +1,12 @@
+version = 1
+url = "http://localhost:8080/usermgmt/onboard"
+method = "GET"
+
+[headers.x-session-token]
+value = "test"
+active = false
+secret = false
+
+[variables]
+
+[inactive-params]

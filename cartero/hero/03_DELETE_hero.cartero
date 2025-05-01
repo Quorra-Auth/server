@@ -1,0 +1,9 @@
+version = 1
+url = "http://localhost:8080/heroes/1"
+method = "DELETE"
+
+[headers]
+
+[variables]
+
+[inactive-params]

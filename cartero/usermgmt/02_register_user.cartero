@@ -1,0 +1,10 @@
+version = 1
+url = "http://localhost:8080/usermgmt/register/{{link_id}}"
+method = "GET"
+
+[headers]
+
+[variables]
+link_id = "d9d61750-b898-44fc-bc26-862d2d58cf02"
+
+[inactive-params]

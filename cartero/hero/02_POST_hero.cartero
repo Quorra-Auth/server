@@ -1,0 +1,14 @@
+version = 1
+url = "http://localhost:8080/users"
+method = "POST"
+
+[body]
+type = "raw"
+format = "json"
+body = '{"name": "John", "age": 12, "secret_name": "Dev"}'
+
+[headers]
+
+[variables]
+
+[inactive-params]
