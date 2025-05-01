@@ -38,8 +38,8 @@ def onboard(session: SessionDep, x_session_token: Annotated[str | None, Header()
 # Should return the user registration QR
 # Needs to know:
 #   the server URL to encode
-#   needs to generate an onboarding session token
-#
+#   needs to generate a user registration token -> store in Valkey
+#   returns a rendered QR code
 
 @router.get("/register/{onboarding_link}", status_code=200, responses={404: {"model": ErrorMessage}})
 def register_user(session: SessionDep, onboarding_link: str):
