@@ -9,9 +9,9 @@ from fastapi.responses import StreamingResponse
 from uuid import uuid4
 import json
 
-from ..classes.onboarding_link import OnboardingLink
-from ..classes.tokens import UserRegistrationToken
-from ..classes.generic_responses import ErrorResponse
+from ..classes import OnboardingLink
+from ..classes import UserRegistrationToken
+from ..classes import ErrorResponse
 
 from ..database import SessionDep
 from ..database import vk
