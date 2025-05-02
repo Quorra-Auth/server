@@ -22,18 +22,19 @@ from ..utils import generate_qr
 server_url = "http://localhost:8080"
 router = APIRouter()
 
+# Should probably return the server URL as well
 @router.get("/init", status_code=201, response_model=OnboardingLink, responses={403: {"model": ErrorResponse}})
-async def onboard(session: SessionDep, x_session_token: Annotated[str | None, Header()] = None) -> OnboardingLink:
+async def onboard(session: SessionDep, x_self_service_token: Annotated[str | None, Header()] = None) -> OnboardingLink:
     authenticated: bool = False
     # If users are empty and onboarding links are empty, we allow it
     # TODO: Check if users are empty
     if len(session.exec(select(OnboardingLink)).all()) == 0:
         authenticated = True
-    # If a valid session token is presented, we allow it
-    if x_session_token is not None:
+    # If a valid self-service token is presented, we allow it
+    if x_self_service_token is not None:
         authenticated = True
     if not authenticated:
-        raise HTTPException(status_code=403, detail="x-session-token missing or invalid")
+        raise HTTPException(status_code=403, detail="x-self-service-token missing or invalid")
     link: OnboardingLink = OnboardingLink(link_id=str(uuid4()))
     session.add(link)
     session.commit()
