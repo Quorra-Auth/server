@@ -48,6 +48,8 @@ async def register_user(session: SessionDep, onboarding_link: str) -> StreamingR
 
     They'll get a rendered user registration QR code. Scanning this code will
     finish user registration.
+
+    The generated QR code is valid for 2 hours.
     \f
     Generates a user registration token -> stores in Valkey
     Returns a rendered QR code PNG"""
