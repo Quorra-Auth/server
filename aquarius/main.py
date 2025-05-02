@@ -4,8 +4,9 @@ from sqlmodel import SQLModel
 from contextlib import asynccontextmanager
 
 from .routers import onboarding
-from .routers import test
-from .routers import hero
+from .routers import mobile
+# from .routers import test
+# from .routers import hero
 
 from .database import engine
 
@@ -31,6 +32,7 @@ app = FastAPI(title="Aquarius", redoc_url=None, lifespan=lifespan)
 #     vk.ping()
 #     return GenericResponse(status="success")
 
-app.include_router(test.router, prefix="/test", tags=["test"])
-app.include_router(hero.router, tags=["hero"])
+# app.include_router(test.router, prefix="/test", tags=["test"])
+# app.include_router(hero.router, tags=["hero"])
 app.include_router(onboarding.router, prefix="/onboarding", tags=["New user onboarding"])
+app.include_router(mobile.router, prefix="/mobile", tags=["Mobile endpoints"])
