@@ -3,7 +3,7 @@ from sqlmodel import SQLModel
 
 from contextlib import asynccontextmanager
 
-from .routers import usermgmt
+from .routers import onboarding
 from .routers import test
 from .routers import hero
 
@@ -25,6 +25,12 @@ async def lifespan(app: FastAPI):
 # version - Pull from the project
 app = FastAPI(title="Aquarius", redoc_url=None, lifespan=lifespan)
 
+# @app.get("/healthcheck")
+# async def healthcheck(session: SessionDep) -> GenericResponse:
+#     # Do some garbage select
+#     vk.ping()
+#     return GenericResponse(status="success")
+
 app.include_router(test.router, prefix="/test", tags=["test"])
 app.include_router(hero.router, tags=["hero"])
-app.include_router(usermgmt.router, prefix="/usermgmt", tags=["User management"])
+app.include_router(onboarding.router, prefix="/onboarding", tags=["New user onboarding"])

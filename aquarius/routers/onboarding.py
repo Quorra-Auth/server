@@ -1,0 +1,63 @@
+from typing import Annotated
+
+from fastapi import APIRouter, Header
+from sqlmodel import select
+
+from fastapi import HTTPException
+from fastapi.responses import StreamingResponse
+
+from uuid import uuid4
+import json
+
+from ..classes.onboarding_link import OnboardingLink
+from ..classes.tokens import UserRegistrationToken
+from ..classes.generic_responses import ErrorResponse
+
+from ..database import SessionDep
+from ..database import vk
+
+from ..utils import generate_qr
+
+# TODO: Parametrize somehow
+server_url = "http://localhost:8080"
+router = APIRouter()
+
+@router.get("/init", status_code=201, response_model=OnboardingLink, responses={403: {"model": ErrorResponse}})
+async def onboard(session: SessionDep, x_session_token: Annotated[str | None, Header()] = None) -> OnboardingLink:
+    authenticated: bool = False
+    # If users are empty and onboarding links are empty, we allow it
+    # TODO: Check if users are empty
+    if len(session.exec(select(OnboardingLink)).all()) == 0:
+        authenticated = True
+    # If a valid session token is presented, we allow it
+    if x_session_token is not None:
+        authenticated = True
+    if not authenticated:
+        raise HTTPException(status_code=403, detail="x-session-token missing or invalid")
+    link: OnboardingLink = OnboardingLink(link_id=str(uuid4()))
+    session.add(link)
+    session.commit()
+    session.refresh(link)
+    return link
+
+
+@router.get("/register/{onboarding_link}", responses={200: {"content": {"image/png": {}}, "description": "Rendered user registration QR code"}, 404: {"model": ErrorResponse}})
+async def register_user(session: SessionDep, onboarding_link: str) -> StreamingResponse:
+    """Users are intended to go to this URL to finish their onboarding.
+
+    They'll get a rendered user registration QR code. Scanning this code will
+    finish user registration.
+    \f
+    Generates a user registration token -> stores in Valkey
+    Returns a rendered QR code PNG"""
+
+    l = session.get(OnboardingLink, onboarding_link)
+    if not l:
+        raise HTTPException(status_code=404, detail="Onboarding link not found")
+    token: str = str(uuid4())
+    qr_content = {"token": token, "server": server_url}
+    vk.set("registration:{}".format(token), 1, ex=7200)
+    session.delete(l)
+    session.commit()
+    code = generate_qr(json.dumps(qr_content))
+    return code

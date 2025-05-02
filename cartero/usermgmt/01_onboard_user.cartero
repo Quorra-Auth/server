@@ -1,5 +1,5 @@
 version = 1
-url = "http://localhost:8080/usermgmt/onboard"
+url = "http://localhost:8080/onboarding/init"
 method = "GET"
 
 [headers.x-session-token]
