@@ -24,7 +24,7 @@ async def lifespan(app: FastAPI):
 # root_path="/whatever" - Make configurable
 # openapi_url, docs_url - Make configurable (toggle)
 # version - Pull from the project
-app = FastAPI(title="Aquarius", redoc_url=None, lifespan=lifespan)
+app = FastAPI(title="Quorra", redoc_url=None, lifespan=lifespan)
 
 # @app.get("/healthcheck")
 # async def healthcheck(session: SessionDep) -> GenericResponse:
