@@ -35,6 +35,7 @@ async def register(rq: RegistrationRequest, session: SessionDep, x_registration_
     # TODO: Adding a new device to an existing user
     # OPTION 1 - new user registration
     urt: str = "user-registration:{}".format(x_registration_token)
+    drt: str = "device-registration:{}".format(x_registration_token)
     if vk.exists(urt):
         u: User = User()
         session.add(u)
