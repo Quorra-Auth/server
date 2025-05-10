@@ -9,15 +9,14 @@ from fastapi.responses import StreamingResponse
 from uuid import uuid4
 import json
 
-from ..classes import OnboardingLink
-from ..classes import UserRegistrationToken
+from ..classes import RegistrationRequest, User, Device
 from ..classes import ErrorResponse
-from ..classes import RegistrationRequest
 
 from ..database import SessionDep
 from ..database import vk
 
 from ..utils import generate_qr
+from ..config import server_url
 
 
 router = APIRouter()
@@ -33,14 +32,25 @@ async def register(rq: RegistrationRequest, session: SessionDep, x_registration_
 
     If a user registration token is used, a new user is created.
     """
-    print(rq.pubkey)
-    rt: str = "registration:{}".format(x_registration_token)
     # TODO: Adding a new device to an existing user
-    if rq.user_id is not None:
-        return {"Not implemented"}
-    # OPTION 1 - only a token is sent
-    elif vk.exists(rt):
-        vk.delete(rt)
-        return {"Token {} deleted".format(rt)}
+    # OPTION 1 - new user registration
+    urt: str = "user-registration:{}".format(x_registration_token)
+    if vk.exists(urt):
+        u: User = User()
+        session.add(u)
+        session.commit()
+        session.refresh(u)
+        vk.delete(urt)
+        uid: int = u.id
+    # OPTION 2 - user exists, only register device
+    # TODO: Fill with logic to find the user ID
+    elif vk.exists(drt):
+        pass
+    else:
+        raise HTTPException(status_code=403, detail="Token invalid")
+    d: Device = Device(**rq.dict(), user_id=uid)
+    session.add(d)
+    session.commit()
+    session.refresh(d)
     return None
 

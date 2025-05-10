@@ -21,11 +21,12 @@ async def lifespan(app: FastAPI):
     yield
     print("Main lifespan done")
 
-# root_path="/whatever" - Make configurable
-# openapi_url, docs_url - Make configurable (toggle)
-# version - Pull from the project
+# TODO: root_path="/whatever" - Make configurable
+# TODO: openapi_url, docs_url - Make configurable (toggle)
+# TODO: version - Pull from the project
 app = FastAPI(title="Quorra", redoc_url=None, lifespan=lifespan)
 
+# TODO: Healthcheck
 # @app.get("/healthcheck")
 # async def healthcheck(session: SessionDep) -> GenericResponse:
 #     # Do some garbage select

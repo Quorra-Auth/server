@@ -10,16 +10,15 @@ from uuid import uuid4
 import json
 
 from ..classes import OnboardingLink
-from ..classes import UserRegistrationToken
 from ..classes import ErrorResponse
 
 from ..database import SessionDep
 from ..database import vk
 
 from ..utils import generate_qr
+from ..config import server_url
 
-# TODO: Parametrize somehow
-server_url = "http://localhost:8080"
+
 router = APIRouter()
 
 # Should probably return the server URL as well
@@ -58,9 +57,11 @@ async def register_user(session: SessionDep, onboarding_link: str) -> StreamingR
     if not l:
         raise HTTPException(status_code=404, detail="Onboarding link not found")
     token: str = str(uuid4())
-    qr_content = {"token": token, "server": server_url}
-    vk.set("registration:{}".format(token), 1, ex=7200)
+    qr_content = "quorra+{}/mobile/register?t={}".format(server_url, token)
+    vk.set("user-registration:{}".format(token), 1, ex=7200)
     session.delete(l)
     session.commit()
-    code = generate_qr(json.dumps(qr_content))
+    # For debugging the mobile app
+    print(token)
+    code = generate_qr(qr_content)
     return code
