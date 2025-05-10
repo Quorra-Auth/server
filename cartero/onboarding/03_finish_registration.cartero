@@ -1,0 +1,15 @@
+version = 1
+url = "http://localhost:8080/mobile/register"
+method = "POST"
+
+[body]
+type = "raw"
+format = "json"
+body = '{"pubkey": "test"}'
+
+[headers]
+x-registration-token = "31b99562-3286-4856-8fa2-2510d2115c84"
+
+[variables]
+
+[inactive-params]
