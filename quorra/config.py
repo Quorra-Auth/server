@@ -20,6 +20,7 @@ def load_config():
     else:
         print("Config file not found!")
         print("Using defaults")
+        config = {}
         config["server"] = {"address": "http://localhost:8080"}
 
     # Default path is None
