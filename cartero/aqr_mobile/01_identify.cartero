@@ -1,0 +1,10 @@
+version = 1
+url = "http://localhost:8080/mobile/aqr/identify?session={{session}}"
+method = "GET"
+
+[headers]
+
+[variables]
+session = "b6589e68-d788-48ba-95fe-4e436c88711d"
+
+[inactive-params]
