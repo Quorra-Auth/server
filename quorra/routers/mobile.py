@@ -8,9 +8,15 @@ from fastapi.responses import StreamingResponse
 
 from uuid import uuid4
 import json
+import base64
 
-from ..classes import RegistrationRequest, User, Device
+from ..classes import DeviceRegistrationRequest, User, Device
+from ..classes import AQRMobileIdentifyRequest, AQRMobileAuthenticateRequest
 from ..classes import ErrorResponse
+
+from cryptography.hazmat.primitives.asymmetric import ed25519
+from cryptography.hazmat.primitives import serialization
+from cryptography.exceptions import InvalidSignature
 
 from ..database import SessionDep
 from ..database import vk
@@ -21,10 +27,9 @@ from ..config import server_url
 
 router = APIRouter()
 
-# TODO: Return the device ID
-# TODO: Use UUIDs in device DB
+# TODO: Return the device ID for future use as a hint for the server
 @router.post("/register", status_code=201, response_model=None, responses={403: {"model": ErrorResponse}})
-async def register_device(rq: RegistrationRequest, session: SessionDep, x_registration_token: Annotated[str, Header()]):
+async def register_device(rq: DeviceRegistrationRequest, session: SessionDep, x_registration_token: Annotated[str, Header()]):
     """Finishes device registration.
 
     Can either use a user or a device registration token.
@@ -51,7 +56,7 @@ async def register_device(rq: RegistrationRequest, session: SessionDep, x_regist
         pass
     else:
         raise HTTPException(status_code=403, detail="Token invalid")
-    d: Device = Device(**rq.dict(), user_id=uid)
+    d: Device = Device(**rq.dict(), user_id=uid, id=str(uuid4()))
     session.add(d)
     session.commit()
     session.refresh(d)
@@ -59,16 +64,36 @@ async def register_device(rq: RegistrationRequest, session: SessionDep, x_regist
 
 
 # TODO: Find which device sent the signature
-@router.get("/aqr/identify", status_code=201, response_model=None, responses={403: {"model": ErrorResponse}})
-async def aqr_identify(db_session: SessionDep, session: str):
+@router.post("/aqr/identify", response_model=None, responses={403: {"model": ErrorResponse}})
+async def aqr_identify(rq: AQRMobileIdentifyRequest, db_session: SessionDep, session: str):
     aqr_vk_session = "aqr-session:{}".format(session)
-    vk.set(aqr_vk_session + ":device-id", "some-device-uuid")
+    if vk.exists(aqr_vk_session + ":device-id"):
+        raise HTTPException(status_code=403, detail="Session already identified")
+    devices = db_session.exec(select(Device)).all()
+    print(devices)
+    device_found = False
+    for device in devices:
+        key = serialization.load_pem_public_key(device.pubkey.encode('utf-8'))
+        try:
+            print(rq.message.encode('utf-8'))
+            print(base64.b64decode(rq.signature))
+            key.verify(base64.b64decode(rq.signature), rq.message.encode('utf-8'))
+        except InvalidSignature:
+            pass
+        else:
+            device_found = True
+            matched_device = device
+            break
+    if device_found:
+        vk.set(aqr_vk_session + ":device-id", matched_device.id, ex=3600)
+    else:
+        raise HTTPException(status_code=403, detail="No matching device")
     return None
 
 
 # TODO: Find which user the device belongs to
-@router.get("/aqr/authenticate", status_code=201, response_model=None, responses={403: {"model": ErrorResponse}})
-async def aqr_authenticate(db_session: SessionDep, session: str):
+@router.post("/aqr/authenticate", response_model=None, responses={404: {"model": ErrorResponse}})
+async def aqr_authenticate(rq: AQRMobileAuthenticateRequest, db_session: SessionDep, session: str):
     aqr_vk_session = "aqr-session:{}".format(session)
     vk.set(aqr_vk_session + ":user-id", "some-user-uuid")
     return None

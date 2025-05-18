@@ -1,5 +1,7 @@
 from sqlmodel import Field, SQLModel
 from pydantic import BaseModel
+from enum import Enum
+from typing import Literal
 
 from datetime import datetime
 
@@ -29,13 +31,12 @@ class User(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
 
 
-class RegistrationRequest(SQLModel):
+class DeviceRegistrationRequest(SQLModel):
     pubkey: str
-    device_name: str | None = None
+    name: str | None = None
 
-# TODO: Use UUIDs
-class Device(RegistrationRequest, table=True):
-    id: int | None = Field(default=None, primary_key=True)
+class Device(DeviceRegistrationRequest, table=True):
+    id: str = Field(primary_key=True)
     user_id: int = Field(default=None, foreign_key="user.id")
 
 
@@ -44,18 +45,32 @@ class AQRSessionResponse(BaseModel):
     # UNIX timestamp - always expires in 15 seconds, polling prolongs the session
     expiration: int
 
-class AQRSessionInitResponse(AQRSessionResponse):
-    state: str = "created"
+class AQRSessionStartResponse(AQRSessionResponse):
+    state: Literal["created"] = "created"
     session_id: str
 
 class AQRSessionWaitingPollResponse(AQRSessionResponse):
-    state: str = "waiting"
+    state: Literal["waiting"] = "waiting"
 
 class AQRSessionIdentifiedPollResponse(AQRSessionWaitingPollResponse):
-    state: str = "identified"
+    state: Literal["identified"] = "identified"
     device_id: str
     device_name: str | None = None
 
 class AQRSessionAuthenticatedPollResponse(AQRSessionIdentifiedPollResponse):
-    state: str = "authenticated"
+    state: Literal["authenticated"] = "authenticated"
     user_id: str
+
+
+class AQRMobileStateEnum(str, Enum):
+    accepted = "accepted"
+    rejected = "rejected"
+
+# TODO: Send a device UUID as well so that the server can get a hint
+class AQRMobileIdentifyRequest(BaseModel):
+    signature: str
+    message: str
+
+class AQRMobileAuthenticateRequest(BaseModel):
+    state: AQRMobileStateEnum
+    signed_message: str
