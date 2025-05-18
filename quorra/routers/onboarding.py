@@ -4,7 +4,6 @@ from fastapi import APIRouter, Header
 from sqlmodel import select
 
 from fastapi import HTTPException
-from fastapi.responses import StreamingResponse
 
 from uuid import uuid4
 import json
@@ -16,6 +15,7 @@ from ..database import SessionDep
 from ..database import vk
 
 from ..utils import generate_qr
+from ..utils import QRCodeResponse
 from ..config import server_url
 
 
@@ -41,8 +41,8 @@ async def onboard(session: SessionDep, x_self_service_token: Annotated[str | Non
     return link
 
 
-@router.get("/register/{onboarding_link}", responses={200: {"content": {"image/png": {}}, "description": "Rendered user registration QR code"}, 404: {"model": ErrorResponse}})
-async def register_user(session: SessionDep, onboarding_link: str) -> StreamingResponse:
+@router.get("/register/{onboarding_link}", response_class=QRCodeResponse, responses={404: {"model": ErrorResponse}})
+async def register_user(session: SessionDep, onboarding_link: str) -> QRCodeResponse:
     """Users are intended to go to this URL to finish their onboarding.
 
     They'll get a rendered user registration QR code. Scanning this code will

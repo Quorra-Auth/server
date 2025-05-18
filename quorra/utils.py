@@ -3,6 +3,10 @@ import qrcode
 import io
 
 
+class QRCodeResponse(StreamingResponse):
+    media_type = "image/png"
+
+
 def generate_qr(text: str) -> StreamingResponse:
     qr = qrcode.QRCode()
     qr.add_data(text)
@@ -11,4 +15,4 @@ def generate_qr(text: str) -> StreamingResponse:
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     buf.seek(0)
-    return StreamingResponse(buf, media_type="image/png")
+    return QRCodeResponse(buf)
