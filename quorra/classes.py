@@ -13,12 +13,12 @@ class GenericResponse(BaseModel):
 
 # Probably remove
 class SuccessResponse(GenericResponse):
-    status: str = "success"
+    status: Literal["success"] = "success"
     data: dict
 
 
 class ErrorResponse(GenericResponse):
-    status: str = "error"
+    status: Literal["error"] = "error"
     detail: str
 
 
