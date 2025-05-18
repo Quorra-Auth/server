@@ -61,7 +61,7 @@ async def register_user(session: SessionDep, onboarding_link: str) -> QRCodeResp
     vk.set("user-registration:{}".format(token), 1, ex=7200)
     session.delete(l)
     session.commit()
-    # For debugging the mobile app
-    print(token)
+    print("Debug only!!!")
+    print("quorra+http://localhost:8080/mobile/register?t=" + token)
     code = generate_qr(qr_content)
     return code
