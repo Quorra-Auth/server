@@ -38,6 +38,8 @@ async def onboard(session: SessionDep, x_self_service_token: Annotated[str | Non
     session.add(link)
     session.commit()
     session.refresh(link)
+    print("Debug only!!!")
+    print("http://localhost:8080/onboarding/register/" + link.link_id)
     return link
 
 
