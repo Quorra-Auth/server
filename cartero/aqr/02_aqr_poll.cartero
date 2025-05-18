@@ -5,6 +5,6 @@ method = "GET"
 [headers]
 
 [variables]
-session = "b6589e68-d788-48ba-95fe-4e436c88711d"
+session = "0911beac-4521-472d-a82a-bf9852f2a434"
 
 [inactive-params]
