@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 from .routers import onboarding
 from .routers import mobile
+from .routers import login_aqr
 # from .routers import test
 # from .routers import hero
 
@@ -37,3 +38,4 @@ app = FastAPI(title="Quorra", redoc_url=None, lifespan=lifespan)
 # app.include_router(hero.router, tags=["hero"])
 app.include_router(onboarding.router, prefix="/onboarding", tags=["New user onboarding"])
 app.include_router(mobile.router, prefix="/mobile", tags=["Mobile endpoints"])
+app.include_router(login_aqr.router, prefix="/login/aqr", tags=["Endpoints for controlling the AQR login method"])

@@ -33,7 +33,29 @@ class RegistrationRequest(SQLModel):
     pubkey: str
     device_name: str | None = None
 
+# TODO: Use UUIDs
 class Device(RegistrationRequest, table=True):
     id: int | None = Field(default=None, primary_key=True)
     user_id: int = Field(default=None, foreign_key="user.id")
 
+
+class AQRSessionResponse(BaseModel):
+    state: str
+    # UNIX timestamp - always expires in 15 seconds, polling prolongs the session
+    expiration: int
+
+class AQRSessionInitResponse(AQRSessionResponse):
+    state: str = "created"
+    session_id: str
+
+class AQRSessionWaitingPollResponse(AQRSessionResponse):
+    state: str = "waiting"
+
+class AQRSessionIdentifiedPollResponse(AQRSessionWaitingPollResponse):
+    state: str = "identified"
+    device_id: str
+    device_name: str | None = None
+
+class AQRSessionAuthenticatedPollResponse(AQRSessionIdentifiedPollResponse):
+    state: str = "authenticated"
+    user_id: str

@@ -21,8 +21,10 @@ from ..config import server_url
 
 router = APIRouter()
 
+# TODO: Return the device ID
+# TODO: Use UUIDs in device DB
 @router.post("/register", status_code=201, response_model=None, responses={403: {"model": ErrorResponse}})
-async def register(rq: RegistrationRequest, session: SessionDep, x_registration_token: Annotated[str, Header()]):
+async def register_device(rq: RegistrationRequest, session: SessionDep, x_registration_token: Annotated[str, Header()]):
     """Finishes device registration.
 
     Can either use a user or a device registration token.
@@ -55,3 +57,18 @@ async def register(rq: RegistrationRequest, session: SessionDep, x_registration_
     session.refresh(d)
     return None
 
+
+# TODO: Find which device sent the signature
+@router.get("/aqr/identify", status_code=201, response_model=None, responses={403: {"model": ErrorResponse}})
+async def aqr_identify(db_session: SessionDep, session: str):
+    aqr_vk_session = "aqr-session:{}".format(session)
+    vk.set(aqr_vk_session + ":device-id", "some-device-uuid")
+    return None
+
+
+# TODO: Find which user the device belongs to
+@router.get("/aqr/authenticate", status_code=201, response_model=None, responses={403: {"model": ErrorResponse}})
+async def aqr_authenticate(db_session: SessionDep, session: str):
+    aqr_vk_session = "aqr-session:{}".format(session)
+    vk.set(aqr_vk_session + ":user-id", "some-user-uuid")
+    return None
