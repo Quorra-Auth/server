@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=42"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = 'quorra'
+dynamic = ["version"]
+description = 'Quorra API server'
+readme = 'README.md'
+requires-python = '>=3.8'
+license = {file = 'LICENSE'}
+authors = [
+    {name = 'Kateřina Medvědová', email = 'k8ie@mcld.eu'},
+]
+dependencies = [
+    "PyYAML",
+    "fastapi",
+    "valkey",
+    "sqlmodel",
+    "qrcode",
+    "uvicorn",
+    "cryptography",
+    "pillow"
+]
+
+[tool.setuptools]
+packages = ["quorra", "quorra.routers"]
+
+# Doesn't work, need to figure out how to add static files to Python project
+[tool.setuptools.package-data]
+"quorra" = ["fe/**"]
+
+[tool.setuptools.dynamic]
+version = {attr = "quorra.__version__"}
+
+[project.scripts]
+quorra-server = "quorra.launcher:launch"

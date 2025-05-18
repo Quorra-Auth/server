@@ -1,4 +1,0 @@
-fastapi
-sqlmodel
-valkey
-qrcode
