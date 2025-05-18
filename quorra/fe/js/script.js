@@ -23,15 +23,20 @@ function startAqr() {
 
 function showQrCode(sessionId) {
   const imageUrl = `/login/aqr/code?session=${sessionId}`;
+  let stuffContainer = document.getElementById('stuff')
 
   let img = document.getElementById('AQR');
-  if (!img) {
-    img = document.createElement('img');
-    img.id = 'AQR';
-    img.alt = 'AQR code';
-    document.body.appendChild(img);
-  }
+  img = document.createElement('img');
+  img.id = 'AQR';
+  img.alt = 'AQR code';
   img.src = imageUrl;
+  stuffContainer.appendChild(img);
+  let br = document.createElement('br')
+  stuffContainer.appendChild(br)
+  let localLink = document.createElement('a');
+  localLink.textContent = 'Use a local install';
+  localLink.href = `quorra+${window.location.origin}/mobile/login?s=${sessionId}`
+  stuffContainer.appendChild(localLink);
 }
 
 function startPolling(sessionId) {
