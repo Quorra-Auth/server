@@ -21,11 +21,12 @@ from ..config import server_url
 
 router = APIRouter()
 
-# Should probably return the server URL as well
+# TODO: Configurable parameter for allowing self-registrations
+# TODO: Should probably return the server URL as well
 @router.get("/init", status_code=201, response_model=OnboardingLink, responses={403: {"model": ErrorResponse}})
 async def onboard(session: SessionDep, x_self_service_token: Annotated[str | None, Header()] = None) -> OnboardingLink:
     authenticated: bool = False
-    # If users are empty and onboarding links are empty, we allow it
+    # If users and onboarding links are empty, we allow it
     # TODO: Check if users are empty
     if len(session.exec(select(OnboardingLink)).all()) == 0:
         authenticated = True
