@@ -63,20 +63,18 @@ async def register_device(rq: DeviceRegistrationRequest, session: SessionDep, x_
     return None
 
 
-# TODO: Find which device sent the signature
+# TODO: Use UUID hints from the device
+# TODO: Session unidentify
 @router.post("/aqr/identify", response_model=None, responses={403: {"model": ErrorResponse}})
 async def aqr_identify(rq: AQRMobileIdentifyRequest, db_session: SessionDep, session: str):
     aqr_vk_session = "aqr-session:{}".format(session)
     if vk.exists(aqr_vk_session + ":device-id"):
         raise HTTPException(status_code=403, detail="Session already identified")
     devices = db_session.exec(select(Device)).all()
-    print(devices)
     device_found = False
     for device in devices:
         key = serialization.load_pem_public_key(device.pubkey.encode('utf-8'))
         try:
-            print(rq.message.encode('utf-8'))
-            print(base64.b64decode(rq.signature))
             key.verify(base64.b64decode(rq.signature), rq.message.encode('utf-8'))
         except InvalidSignature:
             pass
@@ -91,9 +89,17 @@ async def aqr_identify(rq: AQRMobileIdentifyRequest, db_session: SessionDep, ses
     return None
 
 
-# TODO: Find which user the device belongs to
 @router.post("/aqr/authenticate", response_model=None, responses={404: {"model": ErrorResponse}})
 async def aqr_authenticate(rq: AQRMobileAuthenticateRequest, db_session: SessionDep, session: str):
     aqr_vk_session = "aqr-session:{}".format(session)
-    vk.set(aqr_vk_session + ":user-id", "some-user-uuid")
+    device = db_session.exec(select(Device).where(Device.id == vk.get(aqr_vk_session + ":device-id"))).one()
+    key = serialization.load_pem_public_key(device.pubkey.encode('utf-8'))
+    try:
+        key.verify(base64.b64decode(rq.signature), rq.message.encode('utf-8'))
+    except InvalidSignature:
+        raise HTTPException(status_code=403, detail="Signature invalid")
+    else:
+        # TODO: Implement rejection
+        user = db_session.exec(select(User).where(User.id == device.user_id)).one()
+        vk.set(aqr_vk_session + ":user-id", user.id)
     return None

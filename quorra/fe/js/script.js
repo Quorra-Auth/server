@@ -1,40 +1,39 @@
 function startAqr() {
-  fetch('/login/aqr/start')
+  fetch("/login/aqr/start")
     .then(response => {
       if (!response.ok) {
-        throw new Error('Network response was not OK');
+        throw new Error("Network response was not OK");
       }
       return response.json();
     })
     .then(data => {
       const sessionId = data.session_id;
-      console.log('Got session ID:', sessionId);
-      let loginButton = document.getElementById('login_b')
-      document.getElementById('stuff').removeChild(loginButton);
+      let loginButton = document.getElementById("login_b")
+      document.getElementById("user_controls").removeChild(loginButton);
       showQrCode(sessionId);
 
       startPolling(sessionId);
 
     })
     .catch(error => {
-      alert('Fetch error: ' + error.message);
+      alert("Fetch error: " + error.message);
     });
 }
 
 function showQrCode(sessionId) {
   const imageUrl = `/login/aqr/code?session=${sessionId}`;
-  let stuffContainer = document.getElementById('stuff')
+  let stuffContainer = document.getElementById("user_controls")
 
-  let img = document.getElementById('AQR');
-  img = document.createElement('img');
-  img.id = 'AQR';
-  img.alt = 'AQR code';
+  let img = document.getElementById("AQR");
+  img = document.createElement("img");
+  img.id = "AQR";
+  img.alt = "AQR code";
   img.src = imageUrl;
   stuffContainer.appendChild(img);
-  let br = document.createElement('br')
+  let br = document.createElement("br")
   stuffContainer.appendChild(br)
-  let localLink = document.createElement('a');
-  localLink.textContent = 'Use a local install';
+  let localLink = document.createElement("a");
+  localLink.textContent = "Use a local install";
   localLink.href = `quorra+${window.location.origin}/mobile/login?s=${sessionId}`
   stuffContainer.appendChild(localLink);
 }
@@ -42,31 +41,39 @@ function showQrCode(sessionId) {
 function startPolling(sessionId) {
   const pollingUrl = `/login/aqr/poll?session=${sessionId}`;
 
-  function poll() {
+  const intervalId = setInterval(() => {
     fetch(pollingUrl)
       .then(response => {
-        if (!response.ok) throw new Error('Polling failed');
+        if (!response.ok) throw new Error("Polling failed");
         return response.json();
       })
       .then(data => {
-        console.log('Polling data:', data);
-        if (data.state == 'identified') {
-          if (!document.getElementById('status_thingy')) {
-            console.log('something');
-            let status_thingy = document.createElement('h2');
-            status_thingy.id = 'status_thingy';
-            status_thingy.textContent = `We got you! You're ${data.device_id}! You're also known as ${data.device_name}!`;
-            document.getElementById('stuff').appendChild(status_thingy);
+        console.log("Polling data:", data);
+        if (data.state == "identified") {
+          if (!document.getElementById("status_h")) {
+            let status_h = document.createElement("h2");
+            status_h.id = "status_h";
+            let device_identifier = data.device_id;
+            if (data.device_name !== null) {
+              device_identifier = data.device_name;
+            }
+            let msg = `Waiting for confirmation on ${device_identifier}...`;
+            status_h.textContent = msg;
+            document.getElementById("status_container").appendChild(status_h);
           }
+        }
+        else if (data.state == "authenticated") {
+          document.body.removeChild(document.getElementById("user_controls"));
+          let status_h = document.getElementById("status_h");
+          status_h.textContent = "And you're logged in!";
+          let user_h = document.createElement("h3");
+          user_h.textContent = `Your UID: ${data.user_id}`;
+          document.getElementById("status_container").appendChild(user_h);
+          clearInterval(intervalId);
         }
       })
       .catch(error => {
-        console.error('Polling error:', error);
+        console.error("Polling error:", error);
       });
-  }
-
-  poll(); // Initial poll immediately
-
-  // Poll every 5 seconds
-  setInterval(poll, 5000);
+  }, 5000);
 }

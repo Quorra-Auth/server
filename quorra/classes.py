@@ -73,4 +73,5 @@ class AQRMobileIdentifyRequest(BaseModel):
 
 class AQRMobileAuthenticateRequest(BaseModel):
     state: AQRMobileStateEnum
-    signed_message: str
+    signature: str
+    message: str

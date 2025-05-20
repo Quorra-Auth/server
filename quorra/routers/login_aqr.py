@@ -57,8 +57,9 @@ async def aqr_poll(db_session: SessionDep, session: str) -> AQRSessionWaitingPol
         vk_uid: str = aqr_vk_session + ":user-id"
         vk_did: str = aqr_vk_session + ":device-id"
         if vk.exists(vk_uid):
-            # TODO: device name from DB
-            return AQRSessionAuthenticatedPollResponse(device_id=device_id, device_name=None, user_id=vk.get(vk_uid), expiration=vk.expiretime(aqr_vk_session))
+            device_id = vk.get(vk_did)
+            device = db_session.exec(select(Device).where(Device.id == device_id)).one()
+            return AQRSessionAuthenticatedPollResponse(device_id=device_id, device_name=device.name, user_id=vk.get(vk_uid), expiration=vk.expiretime(aqr_vk_session))
         elif vk.exists(vk_did):
             device_id = vk.get(vk_did)
             device = db_session.exec(select(Device).where(Device.id == device_id)).one()
