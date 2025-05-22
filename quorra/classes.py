@@ -28,7 +28,7 @@ class OnboardingLink(SQLModel, table=True):
 
 
 class User(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
+    id: str = Field(primary_key=True)
 
 
 class DeviceRegistrationRequest(SQLModel):
@@ -49,17 +49,16 @@ class AQRSessionStartResponse(AQRSessionResponse):
     state: Literal["created"] = "created"
     session_id: str
 
-class AQRSessionWaitingPollResponse(AQRSessionResponse):
-    state: Literal["waiting"] = "waiting"
+class AQRUnauthenticatedSessionState(str, Enum):
+    waiting = "waiting"
+    identified = "identified"
 
-class AQRSessionIdentifiedPollResponse(AQRSessionWaitingPollResponse):
-    state: Literal["identified"] = "identified"
-    device_id: str
-    device_name: str | None = None
+class AQRSessionUnauthenticatedPollResponse(AQRSessionResponse):
+    state: AQRUnauthenticatedSessionState
 
-class AQRSessionAuthenticatedPollResponse(AQRSessionIdentifiedPollResponse):
+class AQRSessionAuthenticatedPollResponse(AQRSessionResponse):
     state: Literal["authenticated"] = "authenticated"
-    user_id: str
+    code: str
 
 
 class AQRMobileStateEnum(str, Enum):

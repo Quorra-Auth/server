@@ -44,7 +44,7 @@ async def register_device(rq: DeviceRegistrationRequest, session: SessionDep, x_
     urt: str = "user-registration:{}".format(x_registration_token)
     drt: str = "device-registration:{}".format(x_registration_token)
     if vk.exists(urt):
-        u: User = User()
+        u: User = User(id=str(uuid4()))
         session.add(u)
         session.commit()
         session.refresh(u)
@@ -101,5 +101,5 @@ async def aqr_authenticate(rq: AQRMobileAuthenticateRequest, db_session: Session
     else:
         # TODO: Implement rejection
         user = db_session.exec(select(User).where(User.id == device.user_id)).one()
-        vk.set(aqr_vk_session + ":user-id", user.id)
+        vk.set(aqr_vk_session + ":user-id", user.id, ex=3600)
     return None

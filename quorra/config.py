@@ -20,8 +20,7 @@ def load_config():
     else:
         print("Config file not found!")
         print("Using defaults")
-        config = {}
-        config["server"] = {"address": "http://localhost:8080"}
+        config = {"server": {"address": "http://localhost:8080"}, "oidc": {"clients": []}}
 
     # Default path is None
     if "path" not in config["server"]:

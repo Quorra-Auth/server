@@ -36,10 +36,14 @@ function showQrCode(sessionId) {
   localLink.textContent = "Use a local install";
   localLink.href = `quorra+${window.location.origin}/mobile/login?s=${sessionId}`
   stuffContainer.appendChild(localLink);
+  let status_h = document.createElement("h2");
+  status_h.id = "status_h";
+  status_h.textContent = "Scan this QR code on your device";
+  document.getElementById("status_container").appendChild(status_h);
 }
 
 function startPolling(sessionId) {
-  const pollingUrl = `/login/aqr/poll?session=${sessionId}`;
+  const pollingUrl = `/login/aqr/fepoll?session=${sessionId}`;
 
   const intervalId = setInterval(() => {
     fetch(pollingUrl)
@@ -50,25 +54,12 @@ function startPolling(sessionId) {
       .then(data => {
         console.log("Polling data:", data);
         if (data.state == "identified") {
-          if (!document.getElementById("status_h")) {
-            let status_h = document.createElement("h2");
-            status_h.id = "status_h";
-            let device_identifier = data.device_id;
-            if (data.device_name !== null) {
-              device_identifier = data.device_name;
-            }
-            let msg = `Waiting for confirmation on ${device_identifier}...`;
-            status_h.textContent = msg;
-            document.getElementById("status_container").appendChild(status_h);
-          }
+          status_h.textContent = "Waiting for confirmation on your device...";
         }
         else if (data.state == "authenticated") {
           document.body.removeChild(document.getElementById("user_controls"));
           let status_h = document.getElementById("status_h");
           status_h.textContent = "And you're logged in!";
-          let user_h = document.createElement("h3");
-          user_h.textContent = `Your UID: ${data.user_id}`;
-          document.getElementById("status_container").appendChild(user_h);
           clearInterval(intervalId);
         }
       })
