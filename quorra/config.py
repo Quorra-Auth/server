@@ -2,6 +2,7 @@ import yaml
 from pathlib import Path
 import os
 
+
 def load_config():
     CONFIG_PATH = Path(os.getcwd()) / "config.yaml"
     if "QUORRA_CONFIG" in os.environ:
@@ -27,5 +28,14 @@ def load_config():
         config["server"]["path"] = None
     return config
 
-config = load_config()
-server_url = config["server"]["address"]
+
+def determine_server_url(config: dict) -> str:
+    server_url = config["server"]["address"]
+    if config["server"]["path"] is not None:
+        server_url = server_url + config["server"]["path"]
+    return server_url
+
+
+config: dict = load_config()
+server_url: str = determine_server_url(config)
+oidc_clients: list = config["oidc"]["clients"]

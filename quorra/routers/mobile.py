@@ -39,7 +39,6 @@ async def register_device(rq: DeviceRegistrationRequest, session: SessionDep, x_
 
     If a user registration token is used, a new user is created.
     """
-    # TODO: Adding a new device to an existing user
     # OPTION 1 - new user registration
     urt: str = "user-registration:{}".format(x_registration_token)
     drt: str = "device-registration:{}".format(x_registration_token)
@@ -50,6 +49,7 @@ async def register_device(rq: DeviceRegistrationRequest, session: SessionDep, x_
         session.refresh(u)
         vk.delete(urt)
         uid: int = u.id
+    # TODO: Adding a new device to an existing user
     # OPTION 2 - user exists, only register device
     # TODO: Fill with logic to find the user ID
     elif vk.exists(drt):

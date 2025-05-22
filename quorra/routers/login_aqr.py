@@ -26,11 +26,13 @@ router = APIRouter()
 
 
 @router.get("/start", status_code=201)
-async def aqr_start() -> AQRSessionStartResponse:
+async def aqr_start(client_id: str, nonce: str | None = None) -> AQRSessionStartResponse:
     """Starts a new AQR login session."""
     session_id: str = str(uuid4())
     aqr_vk_session: str = "aqr-session:{}".format(session_id)
     vk.set(aqr_vk_session, 1, ex=15)
+    vk.set(aqr_vk_session + ":client-id", client_id, ex=3600)
+    vk.set(aqr_vk_session + ":nonce", nonce, ex=3600)
     return AQRSessionStartResponse(session_id=session_id, expiration=vk.expiretime(aqr_vk_session))
 
 
@@ -55,14 +57,26 @@ async def aqr_fe_poll(db_session: SessionDep, session: str) -> AQRSessionUnauthe
         vk_uid: str = aqr_vk_session + ":user-id"
         vk_did: str = aqr_vk_session + ":device-id"
         if vk.exists(vk_uid):
+            # TODO: Move the Valkey key names to a common location so I don't have to type them a bazillion times
+            code: str = str(uuid4())
+            vk_code: str = "oidc-code:{}".format(code)
+            vk.set(vk_code, 1, ex=15)
+            vk_code_uid: str = vk_code + ":user-id"
+            vk.set(vk_code_uid, vk.get(vk_uid), ex=3600)
+            vk_code_did: str = vk_code + ":device-id"
+            vk.set(vk_code_did, vk.get(vk_did), ex=3600)
+            vk_code_nonce: str = vk_code + ":nonce"
+            if vk.exists(vk_code_nonce):
+                vk.set(vk_code_nonce, vk.get(aqr_vk_session + ":nonce"), ex=3600)
+                vk.delete(aqr_vk_session + ":nonce")
+            vk_code_cid: str = vk_code + ":client-id"
+            vk.set(vk_code_cid, vk.get(aqr_vk_session + ":client-id"), ex=3600)
             vk.delete(aqr_vk_session)
             vk.delete(vk_uid)
             vk.delete(vk_did)
-            # TODO: Bind the code to a user and device so that we can later fill the id_token
-            return AQRSessionAuthenticatedPollResponse(code=str(uuid4()), expiration=vk.expiretime(aqr_vk_session))
+            vk.delete(aqr_vk_session + "client-id")
+            return AQRSessionAuthenticatedPollResponse(code=code, expiration=vk.expiretime(vk_code))
         elif vk.exists(vk_did):
-            device_id = vk.get(vk_did)
-            device = db_session.exec(select(Device).where(Device.id == device_id)).one()
             return AQRSessionUnauthenticatedPollResponse(state="identified", expiration=0)
         else:
             return AQRSessionUnauthenticatedPollResponse(state="waiting", expiration=vk.expiretime(aqr_vk_session))
