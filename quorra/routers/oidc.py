@@ -12,6 +12,7 @@ from ..database import vk
 from ..keys import get_jwk
 from ..utils import generate_id_token, url_encoder
 
+# TODO: This whole file needs type annotations, proper responses, etc.
 router = APIRouter()
 issuer = server_url + "/oidc"
 
