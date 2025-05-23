@@ -20,7 +20,8 @@ dependencies = [
     "qrcode",
     "uvicorn",
     "cryptography",
-    "pillow"
+    "pillow",
+    "python-multipart"
 ]
 
 [tool.setuptools]
