@@ -37,7 +37,7 @@ class DeviceRegistrationRequest(SQLModel):
 
 class Device(DeviceRegistrationRequest, table=True):
     id: str = Field(primary_key=True)
-    user_id: int = Field(default=None, foreign_key="user.id")
+    user_id: str = Field(default=None, foreign_key="user.id")
 
 
 class SessionResponse(BaseModel):
