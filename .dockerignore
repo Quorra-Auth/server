@@ -1,0 +1,8 @@
+**/__pycache__
+build
+quorra.egg-info
+
+cartero
+hurl
+.git
+.github
