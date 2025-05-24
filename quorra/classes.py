@@ -74,3 +74,9 @@ class AQRMobileAuthenticateRequest(BaseModel):
     state: AQRMobileStateEnum
     signature: str
     message: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str = "dummy-access-token"
+    token_type: Literal["Bearer"] = "Bearer"
+    id_token: str
