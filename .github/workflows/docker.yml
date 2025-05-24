@@ -3,7 +3,7 @@ name: "Build Development Docker image"
 on:
   push:
     paths:
-      - quorra/
+      - quorra/**
       - Dockerfile
       - pyproject.toml
   workflow_dispatch:
