@@ -16,7 +16,6 @@ def prep_key():
               format=serialization.PrivateFormat.PKCS8,
               encryption_algorithm=serialization.NoEncryption()).decode("utf-8")
         vk.set("oidc-rsa-key", pem)
-        print(pem)
     return key
 
 key = prep_key()
