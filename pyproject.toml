@@ -22,7 +22,8 @@ dependencies = [
     "cryptography",
     "pillow",
     "python-multipart",
-    "deepmerge"
+    "deepmerge",
+    "python-jose"
 ]
 
 [tool.setuptools]
