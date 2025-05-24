@@ -1,7 +1,6 @@
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 from jose import jwt
-import json
 import base64
 
 from .database import vk
