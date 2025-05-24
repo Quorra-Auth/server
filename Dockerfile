@@ -1,5 +1,5 @@
 FROM docker.io/library/python:latest
-LABEL org.opencontainers.image.source https://github.com/Quorra-Auth/server
+LABEL org.opencontainers.image.source=https://github.com/Quorra-Auth/server
 
 COPY . /src
 RUN pip install /src
