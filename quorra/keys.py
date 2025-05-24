@@ -1,5 +1,6 @@
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
+from jose import jwt
 import json
 import base64
 
@@ -18,10 +19,6 @@ def prep_key():
         vk.set("oidc-rsa-key", pem)
     return key
 
-key = prep_key()
-private_key = key
-public_key = key.public_key()
-
 
 def int_to_base64url(n: int) -> str:
     """Encodes an integer as base64url (without padding)."""
@@ -31,6 +28,8 @@ def int_to_base64url(n: int) -> str:
 
 def get_jwk(kid: str = "main-key") -> dict:
     """Converts an RSA public key to a JWK."""
+    private_key = prep_key()
+    public_key = private_key.public_key()
     numbers = public_key.public_numbers()
     jwk = {
         "kty": "RSA",
@@ -44,7 +43,7 @@ def get_jwk(kid: str = "main-key") -> dict:
 
 
 def sign_jwt(payload):
-    from jose import jwt
+    private_key = prep_key()
     return jwt.encode(
         payload,
         private_key.private_bytes(
