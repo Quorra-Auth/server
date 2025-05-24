@@ -3,24 +3,46 @@ from cryptography.hazmat.primitives import serialization
 import json
 import base64
 
-# Generate RSA keypair
-# TODO: Store somewhere for load-balancing
-key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+from .database import vk
+
+
+def prep_key():
+    if vk.exists("oidc-rsa-key"):
+        pem = vk.get("oidc-rsa-key").encode()
+        key = serialization.load_pem_private_key(pem, password=None)
+    else:
+        key = rsa.generate_private_key(public_exponent=65537, key_size=4096)
+        pem = key.private_bytes(encoding=serialization.Encoding.PEM,
+              format=serialization.PrivateFormat.PKCS8,
+              encryption_algorithm=serialization.NoEncryption()).decode("utf-8")
+        vk.set("oidc-rsa-key", pem)
+        print(pem)
+    return key
+
+key = prep_key()
 private_key = key
 public_key = key.public_key()
 
-def get_jwk():
+
+def int_to_base64url(n: int) -> str:
+    """Encodes an integer as base64url (without padding)."""
+    length = (n.bit_length() + 7) // 8
+    return base64.urlsafe_b64encode(n.to_bytes(length, "big")).decode("utf-8").rstrip("=")
+
+
+def get_jwk(kid: str = "main-key") -> dict:
+    """Converts an RSA public key to a JWK."""
     numbers = public_key.public_numbers()
-    e = base64.urlsafe_b64encode(numbers.e.to_bytes(3, 'big')).decode().rstrip('=')
-    n = base64.urlsafe_b64encode(numbers.n.to_bytes(256, 'big')).decode().rstrip('=')
-    return {
+    jwk = {
         "kty": "RSA",
+        "kid": kid,
         "use": "sig",
         "alg": "RS256",
-        "kid": "dev-key",
-        "n": n,
-        "e": e,
+        "n": int_to_base64url(numbers.n),
+        "e": int_to_base64url(numbers.e),
     }
+    return jwk
+
 
 def sign_jwt(payload):
     from jose import jwt
@@ -32,5 +54,5 @@ def sign_jwt(payload):
             serialization.NoEncryption()
         ),
         algorithm="RS256",
-        headers={"kid": "dev-key"}
+        headers={"kid": "main-key"}
     )
