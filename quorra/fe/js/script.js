@@ -2,8 +2,11 @@ function startAqr() {
   const params = new Proxy(new URLSearchParams(window.location.search), {
   get: (searchParams, prop) => searchParams.get(prop),
 });
-  // TODO: Do not hard-code nonce, check if it was actually sent
-  fetch(`/login/aqr/start?client_id=${params.client_id}&nonce=${params.nonce}`)
+  let args = `client_id=${params.client_id}`
+  if (Object.hasOwn(params, "nonce")) {
+    args = args + `&nonce=${params.nonce}`
+  }
+  fetch(`/login/start?${args}`)
     .then(response => {
       if (!response.ok) {
         throw new Error("Network response was not OK");
@@ -47,7 +50,7 @@ function showQrCode(sessionId) {
 }
 
 function startPolling(sessionId) {
-  const pollingUrl = `/login/aqr/fepoll?session=${sessionId}`;
+  const pollingUrl = `/login/fepoll?session=${sessionId}`;
   const encodeGetParams = p =>
     Object.entries(p).map(kv => kv.map(encodeURIComponent).join("=")).join("&");
   const params = new Proxy(new URLSearchParams(window.location.search), {

@@ -7,10 +7,12 @@ import uuid
 
 from ..config import server_url, oidc_clients
 
+from ..vk_helpers import vk_oidc_code
+
 from ..database import vk
 
 from ..keys import get_jwk
-from ..utils import generate_id_token, url_encoder
+from ..utils import generate_token, url_encoder
 
 # TODO: This whole file needs type annotations, proper responses, etc.
 router = APIRouter()
@@ -36,28 +38,34 @@ def jwks():
 
 
 @router.get("/authorize")
-def authorize(client_id: str, redirect_uri: str, state: str, nonce: str | None = "", response_type: str = "code"):
+def authorize(client_id: str, redirect_uri: str, state: str, nonce: str | None = None, response_type: str = "code"):
     for client in oidc_clients:
         if client_id == client["client_id"]:
             if redirect_uri not in client["redirect_uris"]:
                 raise HTTPException(status_code=400, detail="Invalid client")
         else:
             raise HTTPException(status_code=400, detail="Invalid client")
-    args = {"client_id": client_id, "redirect_uri": redirect_uri, "state": state, "nonce": nonce}
+    args = {"client_id": client_id, "redirect_uri": redirect_uri, "state": state}
+    if nonce is not None:
+        args["nonce"] = nonce
     redirect_url = url_encoder("/fe/index.html", **args)
     return RedirectResponse(url=redirect_url)
 
 
 @router.post("/token")
 async def token(grant_type: str = Form(...), code: str = Form(...), client_id: str = Form(...)):
-    vk_code: str = "oidc-code:{}".format(code)
+    vk_code: str = vk_oidc_code(code)
     if grant_type != "authorization_code" or not vk.exists(vk_code):
         return JSONResponse({"error": "invalid_grant"}, status_code=400)
-    if vk.get(vk_code + ":client-id") != client_id:
+    code_context = vk.hgetall(vk_code)
+    if code_context["client-id"] != client_id:
         return JSONResponse({"error": "invalid_client"}, status_code=400)
-    user: str = vk.get(vk_code + ":user-id")
-    nonce: str = vk.get(vk_code + ":nonce")
-    id_token = generate_id_token(user, client_id, issuer, nonce)
+    user: str = code_context["user-id"]
+    nonce: str | None = None
+    if "nonce" in code_context:
+        nonce = code_context["nonce"]
+    id_token = generate_token(sub=user, aud=client_id, iss=issuer, nonce=nonce)
+    vk.delete(vk_code)
     # TODO: Real access-tokens
     return {
         "access_token": "dummy-access-token",

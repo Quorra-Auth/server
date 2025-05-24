@@ -22,17 +22,16 @@ def generate_qr(text: str) -> StreamingResponse:
     return QRCodeResponse(buf)
 
 
-def generate_id_token(sub, client_id, issuer, nonce):
+def generate_token(**kwargs):
+    if "nonce" in kwargs and kwargs["nonce"] is None:
+        del kwargs["nonce"]
     now = datetime.now()
-    payload = {
-        "iss": issuer,
-        "sub": sub,
-        "aud": client_id,
+    base: dict = {
         "exp": int((now + timedelta(minutes=10)).timestamp()),
         "iat": int(now.timestamp()),
-        "nonce": nonce,
     }
-    return sign_jwt(payload)
+    payload: dict = {**kwargs}
+    return sign_jwt(base | payload)
 
 
 def url_encoder(path, **params):

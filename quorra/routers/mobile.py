@@ -14,6 +14,8 @@ from ..classes import DeviceRegistrationRequest, User, Device
 from ..classes import AQRMobileIdentifyRequest, AQRMobileAuthenticateRequest
 from ..classes import ErrorResponse
 
+from ..vk_helpers import vk_session
+
 from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives import serialization
 from cryptography.exceptions import InvalidSignature
@@ -67,7 +69,7 @@ async def register_device(rq: DeviceRegistrationRequest, session: SessionDep, x_
 # TODO: Session unidentify
 @router.post("/aqr/identify", response_model=None, responses={403: {"model": ErrorResponse}})
 async def aqr_identify(rq: AQRMobileIdentifyRequest, db_session: SessionDep, session: str):
-    aqr_vk_session = "aqr-session:{}".format(session)
+    aqr_vk_session: str = vk_session(session)
     if vk.exists(aqr_vk_session + ":device-id"):
         raise HTTPException(status_code=403, detail="Session already identified")
     devices = db_session.exec(select(Device)).all()
@@ -91,7 +93,7 @@ async def aqr_identify(rq: AQRMobileIdentifyRequest, db_session: SessionDep, ses
 
 @router.post("/aqr/authenticate", response_model=None, responses={404: {"model": ErrorResponse}})
 async def aqr_authenticate(rq: AQRMobileAuthenticateRequest, db_session: SessionDep, session: str):
-    aqr_vk_session = "aqr-session:{}".format(session)
+    aqr_vk_session: str = vk_session(session)
     device = db_session.exec(select(Device).where(Device.id == vk.get(aqr_vk_session + ":device-id"))).one()
     key = serialization.load_pem_public_key(device.pubkey.encode('utf-8'))
     try:

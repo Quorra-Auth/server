@@ -40,23 +40,23 @@ class Device(DeviceRegistrationRequest, table=True):
     user_id: int = Field(default=None, foreign_key="user.id")
 
 
-class AQRSessionResponse(BaseModel):
+class SessionResponse(BaseModel):
     state: str
     # UNIX timestamp - always expires in 15 seconds, polling prolongs the session
     expiration: int
 
-class AQRSessionStartResponse(AQRSessionResponse):
+class SessionStartResponse(SessionResponse):
     state: Literal["created"] = "created"
     session_id: str
 
-class AQRUnauthenticatedSessionState(str, Enum):
+class UnauthenticatedSessionState(str, Enum):
     waiting = "waiting"
     identified = "identified"
 
-class AQRSessionUnauthenticatedPollResponse(AQRSessionResponse):
-    state: AQRUnauthenticatedSessionState
+class UnauthenticatedPollResponse(SessionResponse):
+    state: UnauthenticatedSessionState
 
-class AQRSessionAuthenticatedPollResponse(AQRSessionResponse):
+class AuthenticatedPollResponse(SessionResponse):
     state: Literal["authenticated"] = "authenticated"
     code: str
 
