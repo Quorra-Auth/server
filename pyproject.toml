@@ -21,7 +21,8 @@ dependencies = [
     "uvicorn",
     "cryptography",
     "pillow",
-    "python-multipart"
+    "python-multipart",
+    "deepmerge"
 ]
 
 [tool.setuptools]
