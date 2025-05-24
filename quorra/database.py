@@ -7,7 +7,7 @@ from sqlmodel import Field, Session, SQLModel, create_engine, select
 from valkey import Valkey
 
 sqlite_url = config["database"]["sql"]["string"]
-engine = create_engine(sqlite_url, echo=True)
+engine = create_engine(sqlite_url, echo=False)
 vk = Valkey(host=config["database"]["valkey"]["host"], port=config["database"]["valkey"]["port"], db=config["database"]["valkey"]["db"], decode_responses=True)
 
 async def get_session():
