@@ -1,3 +1,7 @@
+window.onload = function() {
+  startAqr();
+};
+
 function startAqr() {
   const params = new Proxy(new URLSearchParams(window.location.search), {
   get: (searchParams, prop) => searchParams.get(prop),
@@ -15,8 +19,6 @@ function startAqr() {
     })
     .then(data => {
       const sessionId = data.session_id;
-      let loginButton = document.getElementById("login_b")
-      document.getElementById("user_controls").removeChild(loginButton);
       showQrCode(sessionId);
 
       startPolling(sessionId);
@@ -43,10 +45,10 @@ function showQrCode(sessionId) {
   localLink.textContent = "Use a local install";
   localLink.href = `quorra+${window.location.origin}/mobile/login?s=${sessionId}`
   stuffContainer.appendChild(localLink);
-  let status_h = document.createElement("h2");
-  status_h.id = "status_h";
-  status_h.textContent = "Scan this QR code on your device";
-  document.getElementById("status_container").appendChild(status_h);
+  let statusHeader = document.createElement("h2");
+  statusHeader.id = "status_h";
+  statusHeader.textContent = "Scan this QR code on your device";
+  document.getElementById("status_container").appendChild(statusHeader);
 }
 
 function startPolling(sessionId) {
@@ -66,12 +68,21 @@ function startPolling(sessionId) {
       .then(data => {
         console.log("Polling data:", data);
         if (data.state == "identified") {
-          status_h.textContent = "Waiting for confirmation on your device...";
+          let controls = document.getElementById("user_controls");
+          if (controls) {
+            document.body.removeChild(controls);
+          }
+          let statusHeader = document.getElementById("status_h")
+          statusHeader.textContent = "Waiting for confirmation on your device...";
         }
         else if (data.state == "authenticated") {
-          document.body.removeChild(document.getElementById("user_controls"));
-          let status_h = document.getElementById("status_h");
-          status_h.textContent = "And you're logged in!";
+          let statusContainer = document.getElementById("status_container");
+          let statusHeader = document.getElementById("status_h");
+          statusHeader.textContent = "And you're logged in!";
+          let statusSubtitle = document.createElement("h2");
+          statusSubtitle.textContent = "We're redirecting you back to the application";
+          statusContainer.appendChild(statusSubtitle)
+
           clearInterval(intervalId);
           redirectParams = {"code": data.code, "state": params.state, "nonce": params.nonce};
           window.location.href = params.redirect_uri + "?" + encodeGetParams(redirectParams);
