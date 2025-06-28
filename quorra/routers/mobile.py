@@ -75,7 +75,7 @@ async def aqr_identify(rq: AQRMobileIdentifyRequest, db_session: SessionDep, ses
     devices = db_session.exec(select(Device)).all()
     device_found = False
     for device in devices:
-        key = serialization.load_pem_public_key(device.pubkey.encode('utf-8'))
+        key = ed25519.Ed25519PublicKey.from_public_bytes(base64.b64decode(device.pubkey))
         try:
             key.verify(base64.b64decode(rq.signature), rq.message.encode('utf-8'))
         except InvalidSignature:
@@ -95,7 +95,7 @@ async def aqr_identify(rq: AQRMobileIdentifyRequest, db_session: SessionDep, ses
 async def aqr_authenticate(rq: AQRMobileAuthenticateRequest, db_session: SessionDep, session: str):
     aqr_vk_session: str = vk_session(session)
     device = db_session.exec(select(Device).where(Device.id == vk.get(aqr_vk_session + ":device-id"))).one()
-    key = serialization.load_pem_public_key(device.pubkey.encode('utf-8'))
+    key = ed25519.Ed25519PublicKey.from_public_bytes(base64.b64decode(device.pubkey))
     try:
         key.verify(base64.b64decode(rq.signature), rq.message.encode('utf-8'))
     except InvalidSignature:
