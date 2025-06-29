@@ -53,4 +53,4 @@ app.mount("/fe", StaticFiles(directory=fe_dir), name="static")
 
 @app.get("/", include_in_schema=False)
 async def root_redirect():
-    return RedirectResponse(url="/fe/index.html")
+    return RedirectResponse(url="/fe/onboard/index.html")

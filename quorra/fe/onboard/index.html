@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="/fe/style.css"/>
+  <title>Quorra Onboarding</title>
+</head>
+<body>
+  <h1>Welcome to Quorra!</h1>
+  <div id="status_container"></div>
+  <div id="initial">
+    <h2>Quorra uses a mobile token to sign you in</h2>
+    <h3>Download one of our apps to get started</h3>
+    <p><a href="https://github.com/k8ieone/voucher">Voucher</a> for Linux</p>
+    <p><a href="https://github.com/Quorra-Auth/flare">Flare</a> for Android</p>
+    <button id="start_b" onclick="startOnboarding()">Proceed</button>
+  </div>
+
+  <div id="details_form_div" class="hidden">
+    <h2>Please fill in your details</h2>
+    <form id="details_form">
+      <label for="username">Name:</label>
+      <input id="username_input" name="username" type="text" required />
+
+      <label for="email">Email:</label>
+      <input id="email_input" name="email" type="email" required />
+
+      <button type="submit">Submit</button>
+    </form>
+  </div>
+
+  <div id="qr_div" class="hidden">
+    <h2>Almost there!</h2>
+    <h3>Finish your registration by scanning this code with your mobile token</h3>
+    <img id="qr"/>
+    <div class="hr-text"><span>OR</span></div>
+    <a id="local_link">Use a local install</a>
+  </div>
+
+  <script src="onboarding.js"></script>
+</body>
+</html>
+

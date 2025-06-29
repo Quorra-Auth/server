@@ -29,6 +29,18 @@ class OnboardingLink(SQLModel, table=True):
 
 class User(SQLModel, table=True):
     id: str = Field(primary_key=True)
+    username: str
+    email: str
+
+
+class RegistrationRequest(BaseModel):
+    link_id: str
+    username: str
+    email: str
+
+class RegistrationResponse(BaseModel):
+    link: str
+    qr_image: str
 
 
 class DeviceRegistrationRequest(SQLModel):

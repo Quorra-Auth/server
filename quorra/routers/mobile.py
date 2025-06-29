@@ -45,7 +45,8 @@ async def register_device(rq: DeviceRegistrationRequest, session: SessionDep, x_
     urt: str = "user-registration:{}".format(x_registration_token)
     drt: str = "device-registration:{}".format(x_registration_token)
     if vk.exists(urt):
-        u: User = User(id=str(uuid4()))
+        user_details = vk.hgetall(urt)
+        u: User = User(id=str(uuid4()), username=user_details["username"], email=user_details["email"])
         session.add(u)
         session.commit()
         session.refresh(u)

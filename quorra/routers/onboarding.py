@@ -9,6 +9,7 @@ from uuid import uuid4
 import json
 
 from ..classes import OnboardingLink
+from ..classes import RegistrationRequest, RegistrationResponse
 from ..classes import ErrorResponse
 
 from ..database import SessionDep
@@ -40,31 +41,29 @@ async def onboard(session: SessionDep, x_self_service_token: Annotated[str | Non
     session.commit()
     session.refresh(link)
     print("Debug only!!!")
-    print("http://localhost:8080/onboarding/register/" + link.link_id)
+    print("http://localhost:8080/fe/onboard/index.html?link={}".format(link.link_id))
     return link
 
 
-@router.get("/register/{onboarding_link}", response_class=QRCodeResponse, responses={404: {"model": ErrorResponse}})
-async def register_user(session: SessionDep, onboarding_link: str) -> QRCodeResponse:
-    """Users are intended to go to this URL to finish their onboarding.
+@router.post("/register", responses={404: {"model": ErrorResponse}})
+async def register_user(req: RegistrationRequest, session: SessionDep) -> RegistrationResponse:
+    """Used by the frontend to generate a user registration token.
 
-    They'll get a rendered user registration QR code. Scanning this code will
-    finish user registration.
 
-    The generated QR code is valid for 2 hours.
+    The generated token is valid for 2 hours.
     \f
-    Generates a user registration token -> stores in Valkey
-    Returns a rendered QR code PNG"""
+    Generates a user registration token -> stores in Valkey"""
 
-    l = session.get(OnboardingLink, onboarding_link)
+    l = session.get(OnboardingLink, req.link_id)
     if not l:
         raise HTTPException(status_code=404, detail="Onboarding link not found")
     token: str = str(uuid4())
-    qr_content = "quorra+{}/mobile/register?t={}".format(server_url, token)
-    vk.set("user-registration:{}".format(token), 1, ex=7200)
+    link = "quorra+{}/mobile/register?t={}".format(server_url, token)
+    qr_image = generate_qr(link)
+    registration_details = {"username": req.username, "email": req.email}
+    vk.hset("user-registration:{}".format(token), mapping=registration_details)
+    vk.expire("user-registration:{}".format(token), 7200)
+
     session.delete(l)
     session.commit()
-    print("Debug only!!!")
-    print("quorra+http://localhost:8080/mobile/register?t=" + token)
-    code = generate_qr(qr_content)
-    return code
+    return RegistrationResponse(link=link, qr_image=qr_image)
