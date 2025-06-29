@@ -1,9 +1,0 @@
-version = 1
-url = "http://localhost:8080/login/aqr/start"
-method = "GET"
-
-[headers]
-
-[variables]
-
-[inactive-params]
