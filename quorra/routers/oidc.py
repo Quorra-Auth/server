@@ -109,8 +109,8 @@ async def token(db_session: SessionDep, request: Request, grant_type: str = Form
 
 
 # TODO: Implement
-@router.get("/userinfo")
+@router.get("/userinfo", responses={401: {"model": ErrorResponse}})
 def userinfo(authorization: str = ""):
     if "dummy-access-token" not in authorization:
-        return JSONResponse({"error": "unauthorized"}, status_code=401)
+        raise HTTPException(status_code=401, detail="unauthorized")
     return {"sub": "demo_user", "name": "Demo User", "email": "demo@example.com"}
