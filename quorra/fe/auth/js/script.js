@@ -6,7 +6,7 @@ function startAqr() {
   const params = new Proxy(new URLSearchParams(window.location.search), {
   get: (searchParams, prop) => searchParams.get(prop),
 });
-  let args = `client_id=${params.client_id}`
+  let args = `client_id=${params.client_id}&scope=${params.scope}`
   if (params.nonce) {
     args = args + `&nonce=${params.nonce}`
   }

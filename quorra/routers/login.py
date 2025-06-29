@@ -28,13 +28,13 @@ router = APIRouter()
 
 
 @router.get("/start", status_code=201)
-async def login_start(client_id: str, nonce: str | None = None) -> SessionStartResponse:
+async def login_start(client_id: str, scope: str, nonce: str | None = None) -> SessionStartResponse:
     """Starts a new login session."""
     session_id: str = str(uuid4())
     qr_content = "quorra+{}/mobile/login?s={}".format(server_url, session_id)
     qr_image = generate_qr(qr_content)
     vk_s = vk_session(session_id)
-    oidc_context = {"client-id": client_id}
+    oidc_context = {"client-id": client_id, "scope": scope}
     if nonce is not None:
         oidc_context["nonce"] = nonce
     vk.hset(vk_s, mapping=oidc_context)

@@ -27,16 +27,13 @@ def generate_qr(text: str) -> str:
     # return QRCodeResponse(buf)
 
 
-def generate_token(**kwargs):
-    if "nonce" in kwargs and kwargs["nonce"] is None:
-        del kwargs["nonce"]
+def generate_token(claims: dict):
     now = datetime.now()
     base: dict = {
         "exp": int((now + timedelta(minutes=10)).timestamp()),
         "iat": int(now.timestamp()),
     }
-    payload: dict = {**kwargs}
-    return sign_jwt(base | payload)
+    return sign_jwt(base | claims)
 
 
 def url_encoder(path, **params):
