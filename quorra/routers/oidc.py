@@ -59,7 +59,7 @@ async def authorize(client_id: str, redirect_uri: str, state: str, nonce: str | 
     args = {"client_id": client_id, "redirect_uri": redirect_uri, "state": state}
     if nonce is not None:
         args["nonce"] = nonce
-    redirect_url = url_encoder("/fe/index.html", **args)
+    redirect_url = url_encoder("/fe/auth/index.html", **args)
     return RedirectResponse(url=redirect_url)
 
 

@@ -7,7 +7,7 @@ function startAqr() {
   get: (searchParams, prop) => searchParams.get(prop),
 });
   let args = `client_id=${params.client_id}`
-  if (Object.hasOwn(params, "nonce")) {
+  if (params.nonce) {
     args = args + `&nonce=${params.nonce}`
   }
   fetch(`/login/start?${args}`)
