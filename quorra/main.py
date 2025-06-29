@@ -12,7 +12,6 @@ from . import __version__
 from .routers import onboarding
 from .routers import mobile
 from .routers import login
-from .routers import login_aqr
 from .routers import oidc
 
 from .database import engine
@@ -44,7 +43,6 @@ async def healthcheck(session: SessionDep):
 
 app.include_router(onboarding.router, prefix="/onboarding", tags=["New user onboarding"])
 app.include_router(login.router, prefix="/login", tags=["Login session management"])
-app.include_router(login_aqr.router, prefix="/login/aqr", tags=["Endpoints for controlling the AQR login method"])
 app.include_router(mobile.router, prefix="/mobile", tags=["Mobile endpoints"])
 app.include_router(oidc.router, prefix="/oidc", tags=["OIDC"])
 

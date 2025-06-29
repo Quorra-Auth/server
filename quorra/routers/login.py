@@ -31,13 +31,15 @@ router = APIRouter()
 async def login_start(client_id: str, nonce: str | None = None) -> SessionStartResponse:
     """Starts a new login session."""
     session_id: str = str(uuid4())
+    qr_content = "quorra+{}/mobile/login?s={}".format(server_url, session_id)
+    qr_image = generate_qr(qr_content)
     vk_s = vk_session(session_id)
     oidc_context = {"client-id": client_id}
     if nonce is not None:
         oidc_context["nonce"] = nonce
     vk.hset(vk_s, mapping=oidc_context)
     vk.expire(vk_s, 15)
-    return SessionStartResponse(session_id=session_id, expiration=vk.expiretime(vk_s))
+    return SessionStartResponse(session_id=session_id, expiration=vk.expiretime(vk_s), qr_image=qr_image)
 
 
 async def store_oidc_code(session_id: str, code: str):

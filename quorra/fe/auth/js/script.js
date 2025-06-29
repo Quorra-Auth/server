@@ -19,7 +19,7 @@ function startAqr() {
     })
     .then(data => {
       const sessionId = data.session_id;
-      showQrCode(sessionId);
+      showQrCode(sessionId, data.qr_image);
 
       startPolling(sessionId);
 
@@ -29,15 +29,14 @@ function startAqr() {
     });
 }
 
-function showQrCode(sessionId) {
-  const imageUrl = `/login/aqr/code?session=${sessionId}`;
+function showQrCode(sessionId ,qrImage) {
   let stuffContainer = document.getElementById("user_controls")
 
   let img = document.getElementById("AQR");
   img = document.createElement("img");
   img.id = "AQR";
   img.alt = "AQR code";
-  img.src = imageUrl;
+  img.src = qrImage;
   stuffContainer.appendChild(img);
   let br = document.createElement("br")
   stuffContainer.appendChild(br)

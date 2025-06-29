@@ -60,6 +60,7 @@ class SessionResponse(BaseModel):
 class SessionStartResponse(SessionResponse):
     state: Literal["created"] = "created"
     session_id: str
+    qr_image: str
 
 class UnauthenticatedSessionState(str, Enum):
     waiting = "waiting"
