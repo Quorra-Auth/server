@@ -22,7 +22,7 @@ from ..config import server_url
 
 router = APIRouter()
 
-# TODO: Configurable parameter for allowing self-registrations
+# TODO: Configurable parameter for allowing open self-registrations
 # TODO: Should probably return the server URL as well
 @router.get("/init", status_code=201, response_model=OnboardingLink, responses={403: {"model": ErrorResponse}})
 async def onboard(session: SessionDep, x_self_service_token: Annotated[str | None, Header()] = None) -> OnboardingLink:
