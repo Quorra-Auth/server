@@ -66,7 +66,6 @@ async def register_device(rq: DeviceRegistrationRequest, session: SessionDep, x_
 
 
 # TODO: Use UUID hints from the device
-# TODO: Session unidentify
 @router.post("/aqr/identify", response_model=None, responses={403: {"model": ErrorResponse}})
 async def aqr_identify(rq: AQRMobileIdentifyRequest, db_session: SessionDep, session: str):
     aqr_vk_session: str = vk_session(session)
@@ -101,7 +100,10 @@ async def aqr_authenticate(rq: AQRMobileAuthenticateRequest, db_session: Session
     except InvalidSignature:
         raise HTTPException(status_code=403, detail="Signature invalid")
     else:
-        # TODO: Implement rejection
-        user = db_session.exec(select(User).where(User.id == device.user_id)).one()
-        vk.set(aqr_vk_session + ":user-id", user.id, ex=3600)
+        if rq.state == "accepted":
+            user = db_session.exec(select(User).where(User.id == device.user_id)).one()
+            vk.set(aqr_vk_session + ":user-id", user.id, ex=3600)
+        elif rq.state == "rejected":
+            pass
+            # TODO: Figure out what to do here
     return None
