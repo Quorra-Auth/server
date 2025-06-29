@@ -90,5 +90,5 @@ function startPolling(sessionId) {
       .catch(error => {
         console.error("Polling error:", error);
       });
-  }, 5000);
+  }, 2000);
 }
