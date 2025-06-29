@@ -1,3 +1,7 @@
 **/__pycache__
 build
 quorra.egg-info
+
+# Local playground stuff
+config.yaml
+database.db
