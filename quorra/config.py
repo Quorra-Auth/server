@@ -23,7 +23,7 @@ def load_config():
     else:
         print("Config file not found!")
         print("Using defaults")
-    default_config["server"] = {"address": "http://localhost:8080"}
+    default_config["server"] = {"address": "http://localhost:8080", "registrations": False}
     default_config["oidc"] = {"clients": []}
     default_config["database"] = {}
     default_config["database"]["sql"] = {"string": "sqlite:///database.db"}
