@@ -8,7 +8,7 @@ from fastapi import HTTPException
 from uuid import uuid4
 import json
 
-from ..classes import OnboardingLink
+from ..classes import OnboardingLink, User
 from ..classes import RegistrationRequest, RegistrationResponse
 from ..classes import ErrorResponse
 
@@ -18,21 +18,24 @@ from ..database import vk
 from ..utils import generate_qr
 from ..utils import QRCodeResponse
 from ..config import server_url
+from ..config import config
 
 
 router = APIRouter()
 
-# TODO: Configurable parameter for allowing open self-registrations
 # TODO: Should probably return the server URL as well
 @router.get("/init", status_code=201, response_model=OnboardingLink, responses={403: {"model": ErrorResponse}})
 async def onboard(session: SessionDep, x_self_service_token: Annotated[str | None, Header()] = None) -> OnboardingLink:
     authenticated: bool = False
-    # If users and onboarding links are empty, we allow it
-    # TODO: Check if users are empty
-    if len(session.exec(select(OnboardingLink)).all()) == 0:
+    # Bypass for when self-registrations are open
+    if config["server"]["registrations"]:
         authenticated = True
-    # If a valid self-service token is presented, we allow it
-    if x_self_service_token is not None:
+    # If users and onboarding links are empty, we allow it
+    elif len(session.exec(select(OnboardingLink)).all()) == 0 and len(session.exec(select(User)).all()) == 0:
+        authenticated = True
+    # TODO: If a valid self-service token is presented, we allow it
+    # garbage condition for now
+    elif x_self_service_token is not None and authenticated:
         authenticated = True
     if not authenticated:
         raise HTTPException(status_code=403, detail="x-self-service-token missing or invalid")
