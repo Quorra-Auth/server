@@ -38,13 +38,14 @@ class User(SQLModel, table=True):
 
 class RegistrationRequest(BaseModel):
     link_id: str
-    username: str
-    email: str
 
 class RegistrationResponse(BaseModel):
     link: str
     qr_image: str
 
+class EntryRequest(BaseModel):
+    username: str
+    email: str
 
 class DeviceRegistrationRequest(SQLModel):
     pubkey: str
@@ -208,11 +209,4 @@ class OnboardingTransactionStates(str, Enum):
     finished = "finished"
 
 class OnboardingTransaction(Transaction):
-    def transition(self, to_state: str) -> bool:
-        if self.state == OnboardingTransactionStates.created.value and to_state == OnboardingTransactionStates.filled.value:
-            self.save_state(to_state)
-            return True
-        elif self.state == OnboardingTransactionStates.filled.value and to_state == OnboardingTransactionStates.finished.value:
-            self.save_state(to_state)
-            return True
-        return False
+    tx_type: TransactionTypes = TransactionTypes.onboarding

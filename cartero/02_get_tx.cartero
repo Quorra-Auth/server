@@ -1,0 +1,9 @@
+version = 1
+url = "http://localhost:8080/tx/transaction?tx_type=onboarding&tx_id=6806c76b-e5c9-4591-886c-9185ecced972"
+method = "GET"
+
+[headers]
+
+[variables]
+
+[inactive-params]

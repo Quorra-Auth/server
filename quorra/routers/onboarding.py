@@ -9,7 +9,8 @@ from uuid import uuid4
 import json
 
 from ..classes import OnboardingLink, User
-from ..classes import RegistrationRequest, RegistrationResponse
+from ..classes import OnboardingTransaction, OnboardingTransactionStates, TransactionTypes
+from ..classes import RegistrationRequest, RegistrationResponse, EntryRequest
 from ..classes import ErrorResponse
 
 from ..database import SessionDep
@@ -24,7 +25,7 @@ from ..config import config
 router = APIRouter()
 
 # TODO: Should probably return the server URL as well
-@router.get("/init", status_code=201, response_model=OnboardingLink, responses={403: {"model": ErrorResponse}})
+@router.get("/create", status_code=201, responses={403: {"model": ErrorResponse}})
 async def onboard(session: SessionDep, x_self_service_token: Annotated[str | None, Header()] = None) -> OnboardingLink:
     authenticated: bool = False
     # Bypass for when self-registrations are open
@@ -47,19 +48,17 @@ async def onboard(session: SessionDep, x_self_service_token: Annotated[str | Non
     print("http://localhost:8080/fe/onboard/index.html?link={}".format(link.link_id))
     return link
 
-
-@router.post("/register", responses={404: {"model": ErrorResponse}})
-async def register_user(req: RegistrationRequest, session: SessionDep) -> RegistrationResponse:
-    """Used by the frontend to generate a user registration token.
-
-
-    The generated token is valid for 2 hours.
-    \f
-    Generates a user registration token -> stores in Valkey"""
-
+@router.post("/init", responses={404: {"model": ErrorResponse}})
+async def register_user(req: RegistrationRequest, session: SessionDep) -> OnboardingTransaction:
+    """"""
     l = session.get(OnboardingLink, req.link_id)
     if not l:
         raise HTTPException(status_code=404, detail="Onboarding link not found")
+    tx = OnboardingTransaction.new(TransactionTypes.onboarding.value)
+    return tx
+
+@router.post("/entry", responses={400: {"model": ErrorResponse}})
+def whatever(rq: EntryRequest) -> OnboardingTransaction:
     token: str = str(uuid4())
     link = "quorra+{}/mobile/register?t={}".format(server_url, token)
     qr_image = generate_qr(link)

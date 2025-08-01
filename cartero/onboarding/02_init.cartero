@@ -1,6 +1,11 @@
 version = 1
 url = "http://localhost:8080/onboarding/init"
-method = "GET"
+method = "POST"
+
+[body]
+type = "raw"
+format = "json"
+body = '{"link_id": "fb4f944d-b66d-4d2c-8a52-6f5ada784618"}'
 
 [headers.x-session-token]
 value = "test"
