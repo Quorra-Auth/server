@@ -117,7 +117,8 @@ class Transaction(BaseModel):
     _data_key: str
     _state_key: str
     _private_data_key: str
-    _expiry: int = 5
+    # TODO: shorten
+    _expiry: int = 500
 
     def __init__(self, **data):
         super().__init__(**data)
@@ -190,9 +191,11 @@ class Transaction(BaseModel):
         self._add_data(key, data)
 
     def _add_data(self, key: str, data: dict):
-        orig = vk.hgetall(self._data_key)
+        orig = vk.hgetall(key)
         new = orig | data
         vk.hset(key, mapping=new)
+        if "empty" in orig:
+            vk.hdel(key, "empty")
         vk.expire(key, self._expiry)
 
     def prolong(self):

@@ -9,8 +9,9 @@ from uuid import uuid4
 import json
 
 from ..classes import OnboardingLink, User
-from ..classes import OnboardingTransaction, OnboardingTransactionStates, TransactionTypes
-from ..classes import RegistrationRequest, RegistrationResponse, EntryRequest
+from ..classes import OnboardingTransaction, OnboardingTransactionStates
+from ..classes import TransactionTypes, Transaction
+from ..classes import RegistrationRequest, RegistrationResponse, TransactionUpdateRequest
 from ..classes import ErrorResponse
 
 from ..database import SessionDep
@@ -24,9 +25,8 @@ from ..config import config
 
 router = APIRouter()
 
-# TODO: Should probably return the server URL as well
 @router.get("/create", status_code=201, responses={403: {"model": ErrorResponse}})
-async def onboard(session: SessionDep, x_self_service_token: Annotated[str | None, Header()] = None) -> OnboardingLink:
+async def create(session: SessionDep, x_self_service_token: Annotated[str | None, Header()] = None) -> OnboardingLink:
     authenticated: bool = False
     # Bypass for when self-registrations are open
     if config["server"]["registrations"]:
@@ -49,23 +49,33 @@ async def onboard(session: SessionDep, x_self_service_token: Annotated[str | Non
     return link
 
 @router.post("/init", responses={404: {"model": ErrorResponse}})
-async def register_user(req: RegistrationRequest, session: SessionDep) -> OnboardingTransaction:
-    """"""
+async def init(req: RegistrationRequest, session: SessionDep) -> OnboardingTransaction:
+    """Checks the validity of the onboaring link and starts an onboarding transaction"""
     l = session.get(OnboardingLink, req.link_id)
     if not l:
         raise HTTPException(status_code=404, detail="Onboarding link not found")
     tx = OnboardingTransaction.new(TransactionTypes.onboarding.value)
-    return tx
-
-@router.post("/entry", responses={400: {"model": ErrorResponse}})
-def whatever(rq: EntryRequest) -> OnboardingTransaction:
-    token: str = str(uuid4())
-    link = "quorra+{}/mobile/register?t={}".format(server_url, token)
-    qr_image = generate_qr(link)
-    registration_details = {"username": req.username, "email": req.email}
-    vk.hset("user-registration:{}".format(token), mapping=registration_details)
-    vk.expire("user-registration:{}".format(token), 7200)
-
     session.delete(l)
     session.commit()
-    return RegistrationResponse(link=link, qr_image=qr_image)
+    return tx
+
+@router.post("/entry", responses={404: {"model": ErrorResponse}})
+def entry(rq: TransactionUpdateRequest) -> Transaction:
+    """Adds the user context to the onboarding transaction"""
+    token: str = str(uuid4())
+    link = "quorra+{}/mobile/register?t={}".format(server_url, token)
+    #qr_image = generate_qr(link)
+    registration_details = rq.data
+    # TODO: Check if the transaction actually exists
+    tx = Transaction.load(TransactionTypes.onboarding.value, rq.tx_id)
+    if tx is None:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    if "username" in rq.data and "email" in rq.data:
+        tx.add_data(rq.data, True)
+        tx.add_data({"mobile-registration-token": token}, True)
+        tx.save_state("user-info-filled")
+    #registration_details = {"username": rq.username, "email": rq.email}
+    #vk.hset("user-registration:{}".format(token), mapping=registration_details)
+    #vk.expire("user-registration:{}".format(token), 7200)
+
+    return tx

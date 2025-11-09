@@ -1,5 +1,5 @@
 version = 1
-url = "http://localhost:8080/tx/transaction?tx_type=onboarding&tx_id=6806c76b-e5c9-4591-886c-9185ecced972"
+url = "http://localhost:8080/tx/transaction?tx_type=onboarding&tx_id=e4e5a4de-c6e1-462d-8484-efe44b9de147"
 method = "GET"
 
 [headers]
