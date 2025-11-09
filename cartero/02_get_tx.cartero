@@ -1,6 +1,11 @@
 version = 1
-url = "http://localhost:8080/tx/transaction?tx_type=onboarding&tx_id=e4e5a4de-c6e1-462d-8484-efe44b9de147"
-method = "GET"
+url = "http://localhost:8080/tx/transaction"
+method = "POST"
+
+[body]
+type = "raw"
+format = "json"
+body = '{"tx_id": "de32dd03-69ae-4177-b1ed-5a5d7a9b64e0", "tx_type": "onboarding"}'
 
 [headers]
 
