@@ -36,6 +36,23 @@ async function startOnboardingTransaction(onboardingLink) {
   return data.tx_id;
 }
 
+async function getOnboardingData() {
+  const payload = { "tx_type": "onboarding", "tx_id": txId };
+
+  const response = await fetch("/onboarding/qr", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) throw new Error("Request failed");
+
+  const data = await response.json();
+  return data;
+}
+
 function startOnboarding() {
   const params = new Proxy(new URLSearchParams(window.location.search), {
     get: (searchParams, prop) => searchParams.get(prop),
@@ -51,24 +68,59 @@ function startOnboarding() {
 
     const payload = { "tx_id": txId, "data": { "username": name, "email": email }, "tx_type": "onboarding" };
 
-      fetch("/onboarding/entry", {
+    try {
+      const response = await fetch("/onboarding/entry", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error("Request failed");
+
+      const result = await response.json();
+      const onboardingData = await getOnboardingData();
+
+      document.getElementById("details_form_div").classList.add("hidden");
+      document.getElementById("qr_div").classList.remove("hidden");
+      document.getElementById("qr").src = onboardingData.qr_image;
+      document.getElementById("local_link").href = onboardingData.link;
+
+    } catch (error) {
+      console.error(error);
+      alert("An error occurred while starting onboarding.");
+    }
+    startPolling()
+  });
+}
+
+function startPolling() {
+  const pollingUrl = `/tx/transaction`;
+  const payload = { "tx_id": txId, "tx_type": "onboarding" }
+
+  const intervalId = setInterval(() => {
+    fetch(pollingUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       })
       .then(response => {
-        if (!response.ok) throw new Error("Request failed");
+        if (!response.ok) throw new Error("Polling failed");
         return response.json();
       })
       .then(data => {
-        document.getElementById("details_form_div").classList.add("hidden");
-        document.getElementById("qr_div").classList.remove("hidden");
-        document.getElementById("qr").src = data.qr_image;
-        document.getElementById("local_link").href = data.link;
+        console.log("Polling data:", data);
+        if (data.state == "finished") {
+          // Hide qr_code_div and show identified_div
+          clearInterval(intervalId);
+          document.getElementById("qr_div").classList.add("hidden");
+          document.getElementById("welcome_h1").classList.add("hidden");
+          document.getElementById("finished_div").classList.remove("hidden");
+        }
       })
-  });
+      .catch(error => {
+        console.error("Polling error:", error);
+      });
+  }, 2000);
 }
 
 let txId = null;

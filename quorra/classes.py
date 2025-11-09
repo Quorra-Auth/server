@@ -39,7 +39,7 @@ class User(SQLModel, table=True):
 class RegistrationRequest(BaseModel):
     link_id: str
 
-class RegistrationResponse(BaseModel):
+class OnboardingDataResponse(BaseModel):
     link: str
     qr_image: str
 
@@ -102,6 +102,10 @@ class TokenResponse(BaseModel):
 class TransactionTypes(str, Enum):
     onboarding = "onboarding"
     oidc_login = "oidc-login"
+
+class TransactionGetRequest(BaseModel):
+    tx_type: TransactionTypes
+    tx_id: str
 
 class TransactionCreateRequest(BaseModel):
     tx_type: TransactionTypes

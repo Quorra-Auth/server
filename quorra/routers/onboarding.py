@@ -10,8 +10,8 @@ import json
 
 from ..classes import OnboardingLink, User
 from ..classes import OnboardingTransaction, OnboardingTransactionStates
-from ..classes import TransactionTypes, Transaction
-from ..classes import RegistrationRequest, RegistrationResponse, TransactionUpdateRequest
+from ..classes import RegistrationRequest, OnboardingDataResponse
+from ..classes import TransactionTypes, Transaction, TransactionUpdateRequest
 from ..classes import ErrorResponse
 
 from ..database import SessionDep
@@ -63,19 +63,35 @@ async def init(req: RegistrationRequest, session: SessionDep) -> OnboardingTrans
 def entry(rq: TransactionUpdateRequest) -> Transaction:
     """Adds the user context to the onboarding transaction"""
     token: str = str(uuid4())
-    link = "quorra+{}/mobile/register?t={}".format(server_url, token)
-    #qr_image = generate_qr(link)
     registration_details = rq.data
-    # TODO: Check if the transaction actually exists
     tx = Transaction.load(TransactionTypes.onboarding.value, rq.tx_id)
     if tx is None:
         raise HTTPException(status_code=404, detail="Transaction not found")
+    if tx.state != OnboardingTransactionStates.created.value:
+        raise HTTPException(status_code=403, detail="Transaction has already been filled")
     if "username" in rq.data and "email" in rq.data:
-        tx.add_data(rq.data, True)
+        tx.add_data({"username": rq.data["username"]}, True)
+        tx.add_data({"email": rq.data["email"]}, True)
         tx.add_data({"mobile-registration-token": token}, True)
-        tx.save_state("user-info-filled")
-    #registration_details = {"username": rq.username, "email": rq.email}
-    #vk.hset("user-registration:{}".format(token), mapping=registration_details)
-    #vk.expire("user-registration:{}".format(token), 7200)
+        tx.save_state(OnboardingTransactionStates.filled.value)
+    return tx
 
+@router.post("/qr", responses={404: {"model": ErrorResponse}})
+def qr_gen(rq: Transaction) -> OnboardingDataResponse:
+    """Generates an onboarding QR code for the frontend"""
+    tx = Transaction.load(rq.tx_type.value, rq.tx_id)
+    if tx is None:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    if "mobile-registration-token" not in tx.data:
+        raise HTTPException(status_code=404, detail="Mobile token is missing in transaction data")
+    token = tx.data["mobile-registration-token"]
+    link = "quorra+{}/mobile/register?t={}".format(server_url, token)
+    qr_image = generate_qr(link)
+    return OnboardingDataResponse(link=link, qr_image=qr_image)
+
+@router.post("/finish", responses={404: {"model": ErrorResponse}})
+def finish(rq: TransactionUpdateRequest) -> Transaction:
+    """Debug only - finish a transaction"""
+    tx = Transaction.load(TransactionTypes.onboarding.value, rq.tx_id)
+    tx.save_state(OnboardingTransactionStates.finished.value)
     return tx
