@@ -28,6 +28,7 @@ async def migrate():
 
 async def prep_valkey():
     # TODO: Make it a loop over a dict of indexes and schemas
+    # TODO: Error handling and a friendly message when missing JSON/Search modules
     print("Creating indexes in Valkey...")
     await create_drt_index()
     await create_oidc_code_index()
