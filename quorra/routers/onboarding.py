@@ -70,10 +70,10 @@ def entry(rq: TransactionUpdateRequest) -> Transaction:
     if tx.state != OnboardingTransactionStates.created.value:
         raise HTTPException(status_code=403, detail="Transaction has already been filled")
     if "username" in rq.data and "email" in rq.data:
-        tx.add_data({"username": rq.data["username"]}, True)
-        tx.add_data({"email": rq.data["email"]}, True)
-        tx.add_data({"mobile-registration-token": token}, True)
-        tx.save_state(OnboardingTransactionStates.filled.value)
+        entry_data = {"username": rq.data["username"], "email": rq.data["email"]}
+        tx.add_data(".device-registration", {"token": token})
+        tx.add_private_data(".entry", entry_data)
+        tx.set_state(OnboardingTransactionStates.filled.value)
     return tx
 
 @router.post("/qr", responses={404: {"model": ErrorResponse}})
@@ -82,9 +82,9 @@ def qr_gen(rq: Transaction) -> OnboardingDataResponse:
     tx = Transaction.load(rq.tx_type.value, rq.tx_id)
     if tx is None:
         raise HTTPException(status_code=404, detail="Transaction not found")
-    if "mobile-registration-token" not in tx.data:
+    if "device-registration" not in tx.data or "token" not in tx.data["device-registration"]:
         raise HTTPException(status_code=404, detail="Mobile token is missing in transaction data")
-    token = tx.data["mobile-registration-token"]
+    token = tx.data["device-registration"]["token"]
     link = "quorra+{}/mobile/register?t={}".format(server_url, token)
     qr_image = generate_qr(link)
     return OnboardingDataResponse(link=link, qr_image=qr_image)
@@ -93,5 +93,5 @@ def qr_gen(rq: Transaction) -> OnboardingDataResponse:
 def finish(rq: TransactionUpdateRequest) -> Transaction:
     """Debug only - finish a transaction"""
     tx = Transaction.load(TransactionTypes.onboarding.value, rq.tx_id)
-    tx.save_state(OnboardingTransactionStates.finished.value)
+    tx.set_state(OnboardingTransactionStates.finished.value)
     return tx
