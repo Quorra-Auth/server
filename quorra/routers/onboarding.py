@@ -22,7 +22,6 @@ from ..utils import QRCodeResponse
 from ..config import server_url
 from ..config import config
 
-
 router = APIRouter()
 
 @router.get("/create", status_code=201, responses={403: {"model": ErrorResponse}})
@@ -76,6 +75,7 @@ def entry(rq: TransactionUpdateRequest) -> Transaction:
         tx.set_state(OnboardingTransactionStates.filled.value)
     return tx
 
+# TODO: Rotating device registration tokens
 @router.post("/qr", responses={404: {"model": ErrorResponse}})
 def qr_gen(rq: Transaction) -> OnboardingDataResponse:
     """Generates an onboarding QR code for the frontend"""

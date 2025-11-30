@@ -19,13 +19,38 @@ from .database import engine
 from .database import SessionDep
 from .database import vk
 
+from valkey.exceptions import ResponseError
+from valkey.commands.search.field import TagField
+from valkey.commands.search.indexDefinition import IndexDefinition, IndexType
+
 async def migrate():
     SQLModel.metadata.create_all(engine)
+
+async def prep_valkey():
+    print("Creating indexes in Valkey...")
+    await create_drt_index()
+
+async def create_drt_index():
+    idx = vk.ft("idx:device_registration_tokens")
+    schema = (TagField("$.data.['device-registration'].token", as_name="drt"))
+    try:
+        idx.info()
+    except ResponseError:
+        idx.create_index(
+            schema,
+            definition=IndexDefinition(
+                prefix=["onboarding:"],
+                index_type=IndexType.JSON
+            )
+        )
+    print(idx.info()["index_name"], end=" - ")
+    print(idx.info()["Index Errors"])
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Running migrations")
     await migrate()
+    await prep_valkey()
     yield
     print("Main lifespan done")
 

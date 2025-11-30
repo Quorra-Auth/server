@@ -10,7 +10,7 @@ from uuid import uuid4
 import json
 import base64
 
-from ..classes import DeviceRegistrationRequest, User, Device
+from ..classes import DeviceRegistrationRequest, User, Device, Transaction
 from ..classes import AQRMobileIdentifyRequest, AQRMobileAuthenticateRequest
 from ..classes import ErrorResponse
 
@@ -20,12 +20,14 @@ from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives import serialization
 from cryptography.exceptions import InvalidSignature
 
+from valkey.commands.search.query import Query
+
 from ..database import SessionDep
 from ..database import vk
 
 from ..utils import generate_qr
+from ..utils import escape_valkey_tag
 from ..config import server_url
-
 
 router = APIRouter()
 
@@ -42,21 +44,23 @@ async def register_device(rq: DeviceRegistrationRequest, session: SessionDep, x_
     If a user registration token is used, a new user is created.
     """
     # OPTION 1 - new user registration
-    urt: str = "user-registration:{}".format(x_registration_token)
-    drt: str = "device-registration:{}".format(x_registration_token)
-    if vk.exists(urt):
-        user_details = vk.hgetall(urt)
+    safe_token = escape_valkey_tag(x_registration_token)
+    q = Query(f"@drt:{{{safe_token}}}")
+    res = vk.ft("idx:device_registration_tokens").search(q)
+    if res.total == 1:
+        # Finds the matching transaction
+        tx_id = res.docs[0]["id"].split(":")[-1]
+        tx = Transaction.load("onboarding", tx_id)
+        user_details = tx._private_data["entry"]
         u: User = User(id=str(uuid4()), username=user_details["username"], email=user_details["email"])
         session.add(u)
         session.commit()
         session.refresh(u)
-        vk.delete(urt)
+        tx.set_state("finished")
         uid: int = u.id
     # TODO: Adding a new device to an existing user
-    # OPTION 2 - user exists, only register device
+    # TODO: OPTION 2 - user exists, only register device
     # TODO: Fill with logic to find the user ID
-    elif vk.exists(drt):
-        pass
     else:
         raise HTTPException(status_code=403, detail="Token invalid")
     d: Device = Device(**rq.dict(), user_id=uid, id=str(uuid4()))

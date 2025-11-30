@@ -35,7 +35,8 @@ async def get_transaction(rq: TransactionGetRequest) -> Transaction:
     tx = Transaction.load(rq.tx_type.value, rq.tx_id)
     if tx is None:
         raise HTTPException(status_code=404, detail="Transaction not found")
-    tx.prolong()
+    if tx.state != "finished":
+        tx.prolong()
     return tx
 
 @router.post("/create_transaction", status_code=201, response_model=Transaction, responses={401: {"model": ErrorResponse}, 403: {"model": ErrorResponse}, 404: {"model": ErrorResponse}})
