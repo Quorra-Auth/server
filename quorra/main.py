@@ -36,7 +36,7 @@ async def prep_valkey():
 
 async def create_drt_index():
     idx = vk.ft("idx:device_registration_token")
-    schema = (TagField("$.data.device_registration.token", as_name="drt"))
+    schema = (TagField("$.data.device_registration.token", as_name="device_registration_token"))
     try:
         idx.info()
     except ResponseError:

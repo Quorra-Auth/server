@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Form, Depends
+from fastapi import APIRouter, Request, Form, Depends, Header
 from fastapi import HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -6,6 +6,7 @@ from fastapi import Security
 from urllib.parse import urlencode
 from sqlmodel import select
 from uuid import uuid4
+from typing import Annotated
 
 from ..config import server_url, oidc_clients
 
@@ -119,7 +120,6 @@ async def token(db_session: SessionDep, request: Request, grant_type: str = Form
     id_token = generate_token(token_claims)
     access_token = str(uuid4())
     tx.add_private_data(".oidc_data", {"access_token": access_token})
-    print(tx._private_data)
     tx.set_state("token-issued")
     # TODO: Real access-tokens
     return TokenResponse(id_token=id_token, access_token=access_token)
@@ -127,8 +127,12 @@ async def token(db_session: SessionDep, request: Request, grant_type: str = Form
 
 # TODO: Implement checking scopes
 @router.get("/userinfo", responses={401: {"model": ErrorResponse}})
-def userinfo(authorization: str):
-    safe_auth = escape_valkey_tag(authorization)
+def userinfo(authorization: Annotated[str | None, Header(alias="Authorization")] = None):
+    print(authorization)
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="unauthorized")
+    access_token = authorization.removeprefix("Bearer ")
+    safe_auth = escape_valkey_tag(access_token)
     q = Query(f"@oidc_at:{{{safe_auth}}}")
     res = vk.ft("idx:oidc_at").search(q)
     if res.total == 1:
