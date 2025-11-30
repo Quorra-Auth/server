@@ -18,7 +18,6 @@ from ..database import SessionDep
 from ..database import vk
 
 from ..utils import generate_qr
-from ..utils import QRCodeResponse
 from ..config import server_url
 from ..config import config
 
@@ -62,7 +61,6 @@ async def init(req: RegistrationRequest, session: SessionDep) -> OnboardingTrans
 def entry(rq: TransactionUpdateRequest) -> Transaction:
     """Adds the user context to the onboarding transaction"""
     token: str = str(uuid4())
-    registration_details = rq.data
     tx = Transaction.load(TransactionTypes.onboarding.value, rq.tx_id)
     if tx is None:
         raise HTTPException(status_code=404, detail="Transaction not found")

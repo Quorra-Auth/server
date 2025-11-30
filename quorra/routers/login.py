@@ -1,4 +1,4 @@
-from typing import Annotated, Union
+from typing import Annotated
 
 from fastapi import APIRouter, Header
 from sqlmodel import select
@@ -20,7 +20,6 @@ from ..database import SessionDep
 from ..database import vk
 
 from ..utils import generate_qr
-from ..utils import QRCodeResponse
 from ..config import server_url
 
 

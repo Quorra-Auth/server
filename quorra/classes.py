@@ -1,5 +1,5 @@
 from sqlmodel import Field, SQLModel
-from pydantic import BaseModel, field_serializer, PrivateAttr, computed_field
+from pydantic import BaseModel, field_serializer, computed_field
 from enum import Enum
 from typing import Literal
 from datetime import datetime
@@ -10,18 +10,7 @@ from .database import vk
 from valkey.commands.json.path import Path
 
 
-# Responses
-class GenericResponse(BaseModel):
-    status: str
-
-
-# Probably remove
-class SuccessResponse(GenericResponse):
-    status: Literal["success"] = "success"
-    data: dict
-
-
-class ErrorResponse(GenericResponse):
+class ErrorResponse(BaseModel):
     status: Literal["error"] = "error"
     detail: str
 
@@ -43,10 +32,6 @@ class RegistrationRequest(BaseModel):
 class OnboardingDataResponse(BaseModel):
     link: str
     qr_image: str
-
-class EntryRequest(BaseModel):
-    username: str
-    email: str
 
 class DeviceRegistrationRequest(SQLModel):
     pubkey: str

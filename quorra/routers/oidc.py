@@ -5,13 +5,13 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi import Security
 from urllib.parse import urlencode
 from sqlmodel import select
-import uuid
 
 from ..config import server_url, oidc_clients
 
 from ..classes import ErrorResponse
 from ..classes import TokenResponse
 from ..classes import User
+from ..classes import Transaction
 
 from ..vk_helpers import vk_oidc_code, vk_session
 

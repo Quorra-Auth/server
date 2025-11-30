@@ -10,10 +10,6 @@ from string import ascii_letters, digits
 from .keys import sign_jwt
 
 
-class QRCodeResponse(StreamingResponse):
-    media_type = "image/png"
-
-
 def generate_qr(text: str) -> str:
     """Generates a data:image/png;base64 string with an encoded QR PNG"""
     qr = qrcode.QRCode()
