@@ -1,4 +1,3 @@
-from fastapi.responses import StreamingResponse
 import qrcode
 import io
 import urllib

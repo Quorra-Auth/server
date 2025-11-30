@@ -4,7 +4,6 @@ from fastapi import APIRouter, Header
 from sqlmodel import select
 
 from fastapi import HTTPException
-from fastapi.responses import StreamingResponse
 
 from uuid import uuid4
 import json
@@ -13,8 +12,6 @@ import base64
 from ..classes import DeviceRegistrationRequest, User, Device, Transaction
 from ..classes import AQRMobileIdentifyRequest, AQRMobileAuthenticateRequest
 from ..classes import ErrorResponse, AqrOIDCLoginTransactionStates
-
-from ..vk_helpers import vk_session
 
 from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives import serialization

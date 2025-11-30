@@ -42,28 +42,6 @@ class Device(DeviceRegistrationRequest, table=True):
     user_id: str = Field(default=None, foreign_key="user.id")
 
 
-class SessionResponse(BaseModel):
-    state: str
-    # UNIX timestamp - always expires in 15 seconds, polling prolongs the session
-    expiration: int
-
-class SessionStartResponse(SessionResponse):
-    state: Literal["created"] = "created"
-    session_id: str
-    qr_image: str
-
-class UnauthenticatedSessionState(str, Enum):
-    waiting = "waiting"
-    identified = "identified"
-
-class UnauthenticatedPollResponse(SessionResponse):
-    state: UnauthenticatedSessionState
-
-class AuthenticatedPollResponse(SessionResponse):
-    state: Literal["authenticated"] = "authenticated"
-    code: str
-
-
 class AQRMobileStateEnum(str, Enum):
     accepted = "accepted"
     rejected = "rejected"

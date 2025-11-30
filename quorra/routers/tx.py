@@ -4,7 +4,6 @@ from fastapi import APIRouter, Header
 from sqlmodel import select
 
 from fastapi import HTTPException
-from fastapi.responses import StreamingResponse
 
 from uuid import uuid4
 import json
