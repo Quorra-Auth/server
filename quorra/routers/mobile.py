@@ -12,7 +12,7 @@ import base64
 
 from ..classes import DeviceRegistrationRequest, User, Device, Transaction
 from ..classes import AQRMobileIdentifyRequest, AQRMobileAuthenticateRequest
-from ..classes import ErrorResponse
+from ..classes import ErrorResponse, AqrOIDCLoginTransactionStates
 
 from ..vk_helpers import vk_session
 
@@ -21,6 +21,8 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.exceptions import InvalidSignature
 
 from valkey.commands.search.query import Query
+
+from .oidc import store_oidc_code
 
 from ..database import SessionDep
 from ..database import vk
@@ -45,8 +47,8 @@ async def register_device(rq: DeviceRegistrationRequest, session: SessionDep, x_
     """
     # OPTION 1 - new user registration
     safe_token = escape_valkey_tag(x_registration_token)
-    q = Query(f"@drt:{{{safe_token}}}")
-    res = vk.ft("idx:device_registration_tokens").search(q)
+    q = Query(f"@device_registration_token:{{{safe_token}}}")
+    res = vk.ft("idx:device_registration_token").search(q)
     if res.total == 1:
         # Finds the matching transaction
         tx_id = res.docs[0]["id"].split(":")[-1]
@@ -73,8 +75,8 @@ async def register_device(rq: DeviceRegistrationRequest, session: SessionDep, x_
 # TODO: Use UUID hints from the device
 @router.post("/aqr/identify", response_model=None, responses={403: {"model": ErrorResponse}})
 async def aqr_identify(rq: AQRMobileIdentifyRequest, db_session: SessionDep, session: str):
-    aqr_vk_session: str = vk_session(session)
-    if vk.exists(aqr_vk_session + ":device-id"):
+    tx = Transaction.load("aqr-oidc-login", session)
+    if tx.state != AqrOIDCLoginTransactionStates.created.value:
         raise HTTPException(status_code=403, detail="Session already identified")
     devices = db_session.exec(select(Device)).all()
     device_found = False
@@ -89,7 +91,8 @@ async def aqr_identify(rq: AQRMobileIdentifyRequest, db_session: SessionDep, ses
             matched_device = device
             break
     if device_found:
-        vk.set(aqr_vk_session + ":device-id", matched_device.id, ex=3600)
+        tx.add_private_data(".user", {"device-id": matched_device.id})
+        tx.set_state("identified")
     else:
         raise HTTPException(status_code=403, detail="No matching device")
     return None
@@ -97,8 +100,9 @@ async def aqr_identify(rq: AQRMobileIdentifyRequest, db_session: SessionDep, ses
 
 @router.post("/aqr/authenticate", response_model=None, responses={404: {"model": ErrorResponse}})
 async def aqr_authenticate(rq: AQRMobileAuthenticateRequest, db_session: SessionDep, session: str):
-    aqr_vk_session: str = vk_session(session)
-    device = db_session.exec(select(Device).where(Device.id == vk.get(aqr_vk_session + ":device-id"))).one()
+    tx = Transaction.load("aqr-oidc-login", session)
+    device_id = tx._private_data["user"]["device-id"]
+    device = db_session.exec(select(Device).where(Device.id == device_id)).one()
     key = ed25519.Ed25519PublicKey.from_public_bytes(base64.b64decode(device.pubkey))
     try:
         key.verify(base64.b64decode(rq.signature), rq.message.encode('utf-8'))
@@ -107,7 +111,9 @@ async def aqr_authenticate(rq: AQRMobileAuthenticateRequest, db_session: Session
     else:
         if rq.state == "accepted":
             user = db_session.exec(select(User).where(User.id == device.user_id)).one()
-            vk.set(aqr_vk_session + ":user-id", user.id, ex=3600)
+            tx.add_private_data(".user", {"uid": user.id})
+            await store_oidc_code(tx)
+            tx.set_state("confirmed")
         elif rq.state == "rejected":
             pass
             # TODO: Figure out what to do here

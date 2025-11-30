@@ -27,12 +27,15 @@ async def migrate():
     SQLModel.metadata.create_all(engine)
 
 async def prep_valkey():
+    # TODO: Make it a loop over a dict of indexes and schemas
     print("Creating indexes in Valkey...")
     await create_drt_index()
+    await create_oidc_code_index()
+    await create_oidc_at_index()
 
 async def create_drt_index():
-    idx = vk.ft("idx:device_registration_tokens")
-    schema = (TagField("$.data.['device-registration'].token", as_name="drt"))
+    idx = vk.ft("idx:device_registration_token")
+    schema = (TagField("$.data.device_registration.token", as_name="drt"))
     try:
         idx.info()
     except ResponseError:
@@ -43,8 +46,40 @@ async def create_drt_index():
                 index_type=IndexType.JSON
             )
         )
-    print(idx.info()["index_name"], end=" - ")
-    print(idx.info()["Index Errors"])
+    info = idx.info()
+    print("{} - {} documents, attributes: {}".format(info["index_name"], info["num_docs"], info["attributes"]))
+
+async def create_oidc_code_index():
+    idx = vk.ft("idx:oidc_code")
+    schema = (TagField("$.data.oidc_data.code", as_name="oidc_code"))
+    try:
+        idx.info()
+    except ResponseError:
+        idx.create_index(
+            schema,
+            definition=IndexDefinition(
+                prefix=["aqr-oidc-login:"],
+                index_type=IndexType.JSON
+            )
+        )
+    info = idx.info()
+    print("{} - {} documents, attributes: {}".format(info["index_name"], info["num_docs"], info["attributes"]))
+
+async def create_oidc_at_index():
+    idx = vk.ft("idx:oidc_at")
+    schema = (TagField("$.private.oidc_data.access_token", as_name="oidc_at"))
+    try:
+        idx.info()
+    except ResponseError:
+        idx.create_index(
+            schema,
+            definition=IndexDefinition(
+                prefix=["aqr-oidc-login:"],
+                index_type=IndexType.JSON
+            )
+        )
+    info = idx.info()
+    print("{} - {} documents, attributes: {}".format(info["index_name"], info["num_docs"], info["attributes"]))
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

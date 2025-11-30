@@ -29,7 +29,7 @@ class User(SQLModel, table=True):
 class RegistrationRequest(BaseModel):
     link_id: str
 
-class OnboardingDataResponse(BaseModel):
+class QRDataResponse(BaseModel):
     link: str
     qr_image: str
 
@@ -80,14 +80,14 @@ class AQRMobileAuthenticateRequest(BaseModel):
 
 
 class TokenResponse(BaseModel):
-    access_token: str = "dummy-access-token"
+    access_token: str
     token_type: Literal["Bearer"] = "Bearer"
     id_token: str
 
 
 class TransactionTypes(str, Enum):
     onboarding = "onboarding"
-    oidc_login = "oidc-login"
+    aqr_oidc_login = "aqr-oidc-login"
 
 class TransactionGetRequest(BaseModel):
     tx_type: TransactionTypes
@@ -144,8 +144,13 @@ class Transaction(BaseModel):
         tx.set_contents(initial_contents)
         return tx
 
+    def check_state_transition(self, state_from, state_to):
+        """Dummy function - to be overridden by individual transaction types"""
+        return True
+
     def set_state(self, state):
-        vk.json().set(self._key_name, "$.state", state)
+        if self.check_state_transition(self.state, state):
+            vk.json().set(self._key_name, "$.state", state)
 
     def add_data(self, path, data):
         vk.json().set(self._key_name, "$.data{}".format(path), data)
@@ -168,4 +173,15 @@ class OnboardingTransactionStates(str, Enum):
     finished = "finished"
 
 class OnboardingTransaction(Transaction):
+    # TODO: Move transition checks here
     tx_type: TransactionTypes = TransactionTypes.onboarding
+
+class AqrOIDCLoginTransaction(Transaction):
+    tx_type: TransactionTypes = TransactionTypes.aqr_oidc_login
+
+class AqrOIDCLoginTransactionStates(str, Enum):
+    created = "created"
+    identified = "identified"
+    confirmed = "confirmed"
+    rejected = "rejected"
+    token_issued = "token-issued"

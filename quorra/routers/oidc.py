@@ -5,21 +5,21 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi import Security
 from urllib.parse import urlencode
 from sqlmodel import select
+from uuid import uuid4
 
 from ..config import server_url, oidc_clients
 
 from ..classes import ErrorResponse
 from ..classes import TokenResponse
-from ..classes import User
-from ..classes import Transaction
+from ..classes import User, Transaction
 
-from ..vk_helpers import vk_oidc_code, vk_session
+from valkey.commands.search.query import Query
 
 from ..database import SessionDep
 from ..database import vk
 
 from ..keys import get_jwk
-from ..utils import generate_token, url_encoder
+from ..utils import generate_token, url_encoder, escape_valkey_tag
 
 
 security_scheme = HTTPBasic(auto_error=False)
@@ -80,37 +80,63 @@ def get_client_credentials(
     return form_client_id, form_client_secret
 
 
+async def store_oidc_code(tx: Transaction):
+    code: str = str(uuid4())
+    tx.add_data(".oidc_data.code", code)
+
+
 @router.post("/token", responses={400: {"model": ErrorResponse}, 401: {"model": ErrorResponse}})
 async def token(db_session: SessionDep, request: Request, grant_type: str = Form(...), code: str = Form(...), creds: tuple[str, str] = Depends(get_client_credentials)) -> TokenResponse:
-    client_id, client_secret = creds
-    vk_code: str = vk_oidc_code(code)
-    if grant_type != "authorization_code" or not vk.exists(vk_code):
+    # Other grants are not supported
+    if grant_type != "authorization_code":
         raise HTTPException(status_code=400, detail="invalid_grant")
-    code_context = vk.hgetall(vk_code)
-    if code_context["client-id"] != client_id:
-        raise HTTPException(status_code=400, detail="invalid_client")
+    client_id, client_secret = creds
+    # Look up the transaction if initial checks pass
+    safe_code = escape_valkey_tag(code)
+    q = Query(f"@oidc_code:{{{safe_code}}}")
+    res = vk.ft("idx:oidc_code").search(q)
+    if res.total == 1:
+        tx_id = res.docs[0]["id"].split(":")[-1]
+        tx = Transaction.load("aqr-oidc-login", tx_id)
+    else:
+        raise HTTPException(status_code=400, detail="invalid_grant")
+    # Final checks before issuing the ID token
     client = find_client(client_id)
-    if client_secret != client["client_secret"]:
+    if tx.data["oidc_data"]["client-id"] != client_id:
+        raise HTTPException(status_code=400, detail="invalid_client")
+    elif client_secret != client["client_secret"]:
         raise HTTPException(status_code=401, detail="unauthorized_client")
-    user: str = code_context["user-id"]
+    user: str = tx._private_data["user"]["uid"]
     token_claims = {"sub": user, "aud": client_id, "iss": issuer}
-    if "nonce" in code_context:
-        token_claims["nonce"] = code_context["nonce"]
-    if "profile" in code_context["scope"]:
+    if "nonce" in tx.data["oidc_data"]:
+        token_claims["nonce"] = tx.data["oidc_data"]["nonce"]
+    if "profile" in tx.data["oidc_data"]["scope"]:
         username = db_session.exec(select(User.username).where(User.id == user)).one()
         token_claims["nickname"] = username
-    if "email" in code_context["scope"]:
+    if "email" in tx.data["oidc_data"]["scope"]:
         email = db_session.exec(select(User.email).where(User.id == user)).one()
         token_claims["email"] = email
     id_token = generate_token(token_claims)
-    vk.delete(vk_code)
+    access_token = str(uuid4())
+    tx.add_private_data(".oidc_data", {"access_token": access_token})
+    print(tx._private_data)
+    tx.set_state("token-issued")
     # TODO: Real access-tokens
-    return TokenResponse(id_token=id_token)
+    return TokenResponse(id_token=id_token, access_token=access_token)
 
 
-# TODO: Implement
+# TODO: Implement checking scopes
 @router.get("/userinfo", responses={401: {"model": ErrorResponse}})
-def userinfo(authorization: str = ""):
-    if "dummy-access-token" not in authorization:
+def userinfo(authorization: str):
+    safe_auth = escape_valkey_tag(authorization)
+    q = Query(f"@oidc_at:{{{safe_auth}}}")
+    res = vk.ft("idx:oidc_at").search(q)
+    if res.total == 1:
+        tx_id = res.docs[0]["id"].split(":")[-1]
+        tx = Transaction.load("aqr-oidc-login", tx_id)
+    else:
         raise HTTPException(status_code=401, detail="unauthorized")
-    return {"sub": "demo_user", "name": "Demo User", "email": "demo@example.com"}
+    user = tx._private_data["user"]["uid"]
+    client_id = tx.data["oidc_data"]["client-id"]
+    claims = {"sub": user, "aud": client_id, "iss": issuer}
+    return claims
