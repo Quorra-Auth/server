@@ -1,0 +1,14 @@
+version = 1
+url = "http://localhost:8080/tx/transaction"
+method = "POST"
+
+[body]
+type = "raw"
+format = "json"
+body = '{"tx_id": "de32dd03-69ae-4177-b1ed-5a5d7a9b64e0", "tx_type": "onboarding"}'
+
+[headers]
+
+[variables]
+
+[inactive-params]

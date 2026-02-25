@@ -9,23 +9,22 @@ from uuid import uuid4
 import json
 
 from ..classes import OnboardingLink, User
-from ..classes import RegistrationRequest, RegistrationResponse
+from ..classes import OnboardingTransaction, OnboardingTransactionStates
+from ..classes import RegistrationRequest, QRDataResponse
+from ..classes import TransactionTypes, Transaction, TransactionUpdateRequest
 from ..classes import ErrorResponse
 
 from ..database import SessionDep
 from ..database import vk
 
 from ..utils import generate_qr
-from ..utils import QRCodeResponse
 from ..config import server_url
 from ..config import config
 
-
 router = APIRouter()
 
-# TODO: Should probably return the server URL as well
-@router.get("/init", status_code=201, response_model=OnboardingLink, responses={403: {"model": ErrorResponse}})
-async def onboard(session: SessionDep, x_self_service_token: Annotated[str | None, Header()] = None) -> OnboardingLink:
+@router.get("/create", status_code=201, responses={403: {"model": ErrorResponse}})
+async def create(session: SessionDep, x_self_service_token: Annotated[str | None, Header()] = None) -> OnboardingLink:
     authenticated: bool = False
     # Bypass for when self-registrations are open
     if config["server"]["registrations"]:
@@ -47,26 +46,50 @@ async def onboard(session: SessionDep, x_self_service_token: Annotated[str | Non
     print("http://localhost:8080/fe/onboard/index.html?link={}".format(link.link_id))
     return link
 
-
-@router.post("/register", responses={404: {"model": ErrorResponse}})
-async def register_user(req: RegistrationRequest, session: SessionDep) -> RegistrationResponse:
-    """Used by the frontend to generate a user registration token.
-
-
-    The generated token is valid for 2 hours.
-    \f
-    Generates a user registration token -> stores in Valkey"""
-
+@router.post("/init", responses={404: {"model": ErrorResponse}})
+async def init(req: RegistrationRequest, session: SessionDep) -> OnboardingTransaction:
+    """Checks the validity of the onboaring link and starts an onboarding transaction"""
     l = session.get(OnboardingLink, req.link_id)
     if not l:
         raise HTTPException(status_code=404, detail="Onboarding link not found")
-    token: str = str(uuid4())
-    link = "quorra+{}/mobile/register?t={}".format(server_url, token)
-    qr_image = generate_qr(link)
-    registration_details = {"username": req.username, "email": req.email}
-    vk.hset("user-registration:{}".format(token), mapping=registration_details)
-    vk.expire("user-registration:{}".format(token), 7200)
-
+    tx = OnboardingTransaction.new(TransactionTypes.onboarding.value)
     session.delete(l)
     session.commit()
-    return RegistrationResponse(link=link, qr_image=qr_image)
+    return tx
+
+@router.post("/entry", responses={404: {"model": ErrorResponse}})
+def entry(rq: TransactionUpdateRequest) -> Transaction:
+    """Adds the user context to the onboarding transaction"""
+    token: str = str(uuid4())
+    tx = Transaction.load(TransactionTypes.onboarding.value, rq.tx_id)
+    if tx is None:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    if tx.state != OnboardingTransactionStates.created.value:
+        raise HTTPException(status_code=403, detail="Transaction has already been filled")
+    if "username" in rq.data and "email" in rq.data:
+        entry_data = {"username": rq.data["username"], "email": rq.data["email"]}
+        tx.add_data(".device_registration", {"token": token})
+        tx.add_private_data(".entry", entry_data)
+        tx.set_state(OnboardingTransactionStates.filled.value)
+    return tx
+
+# TODO: Rotating device registration tokens
+@router.post("/qr", responses={404: {"model": ErrorResponse}})
+def qr_gen(rq: Transaction) -> QRDataResponse:
+    """Generates an onboarding QR code for the frontend"""
+    tx = Transaction.load(TransactionTypes.onboarding.value, rq.tx_id)
+    if tx is None:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    if "device_registration" not in tx.data or "token" not in tx.data["device_registration"]:
+        raise HTTPException(status_code=404, detail="Mobile token is missing in transaction data")
+    token = tx.data["device_registration"]["token"]
+    link = "quorra+{}/mobile/register?t={}".format(server_url, token)
+    qr_image = generate_qr(link)
+    return QRDataResponse(link=link, qr_image=qr_image)
+
+@router.post("/finish", responses={404: {"model": ErrorResponse}})
+def finish(rq: TransactionUpdateRequest) -> Transaction:
+    """Debug only - finish a transaction"""
+    tx = Transaction.load(TransactionTypes.onboarding.value, rq.tx_id)
+    tx.set_state(OnboardingTransactionStates.finished.value)
+    return tx

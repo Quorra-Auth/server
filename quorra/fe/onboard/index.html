@@ -7,7 +7,7 @@
   <title>Quorra Onboarding</title>
 </head>
 <body>
-  <h1>Welcome to Quorra!</h1>
+  <h1 id="welcome_h1">Welcome to Quorra!</h1>
   <div id="status_container"></div>
   <div id="initial">
     <h2>Quorra uses a mobile token to sign you in</h2>
@@ -36,6 +36,11 @@
     <img id="qr"/>
     <div class="hr-text"><span>OR</span></div>
     <a id="local_link">Use a local install</a>
+  </div>
+
+  <div id="finished_div" class="hidden">
+    <h1>And you're done!</h1>
+    <h2>You can now start using your newly registered device to sign in with Quorra!</h2>
   </div>
 
   <script src="onboarding.js"></script>

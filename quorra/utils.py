@@ -1,15 +1,12 @@
-from fastapi.responses import StreamingResponse
 import qrcode
 import io
 import urllib
 import base64
 from datetime import datetime, timedelta
 
+from string import ascii_letters, digits
+
 from .keys import sign_jwt
-
-
-class QRCodeResponse(StreamingResponse):
-    media_type = "image/png"
 
 
 def generate_qr(text: str) -> str:
@@ -41,3 +38,14 @@ def url_encoder(path, **params):
     parsed[4] = urllib.parse.urlencode(params)
     return urllib.parse.urlunparse(parsed)
 
+
+def escape_valkey_tag(value: str):
+    # Escape everything that is not "safe" in TAG values
+    allowed_chars = ascii_letters + digits + "_"
+    out = []
+    for ch in value:
+        if ch in allowed_chars:
+            out.append(ch)
+        else:
+            out.append("\\" + ch)
+    return "".join(out)

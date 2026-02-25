@@ -1,8 +1,10 @@
-window.onload = function() {
-  startAqr();
+let txId = null;
+
+window.onload = async function() {
+  await startAqr();
 };
 
-function startAqr() {
+async function startAqr() {
   const params = new Proxy(new URLSearchParams(window.location.search), {
   get: (searchParams, prop) => searchParams.get(prop),
 });
@@ -10,43 +12,44 @@ function startAqr() {
   if (params.nonce) {
     args = args + `&nonce=${params.nonce}`
   }
-  fetch(`/login/start?${args}`)
-    .then(response => {
-      if (!response.ok) {
-        throw new Error("Network response was not OK");
-      }
-      return response.json();
-    })
-    .then(data => {
-      const sessionId = data.session_id;
-      showQrCode(sessionId, data.qr_image);
-
-      startPolling(sessionId);
-
-    })
-    .catch(error => {
-      alert("Fetch error: " + error.message);
-    });
+  const response = await fetch(`/login/start?${args}`);
+  if (!response.ok) throw new Error("Request failed");
+  data = await response.json();
+  txId = data.tx_id;
+  await showQrCode();
+  startPolling();
 }
 
-function showQrCode(sessionId ,qrImage) {
-  AQR.src = qrImage;
-  local_link.href = `quorra+${window.location.origin}/mobile/login?s=${sessionId}`;
+async function showQrCode() {
+  const payload = { "tx_type": "aqr-oidc-login", "tx_id": txId };
+  const response = await fetch("/login/qr", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+  data = await response.json()
+  qr.src = data.qr_image;
+  local_link.href = data.link;
 }
 
-function startPolling(sessionId) {
-  const pollingUrl = `/login/fepoll?session=${sessionId}`;
+function startPolling() {
+  const pollingUrl = `/tx/transaction`;
+  const payload = { "tx_id": txId, "tx_type": "aqr-oidc-login" }
+
   const encodeGetParams = p =>
     Object.entries(p).map(kv => kv.map(encodeURIComponent).join("=")).join("&");
   const params = new Proxy(new URLSearchParams(window.location.search), {
   get: (searchParams, prop) => searchParams.get(prop),
-});
-  let qrCodeDiv = document.getElementById("qr_code_div");
-  let identifiedDiv = document.getElementById("identified_div");
-  let finishedDiv = document.getElementById("finished_div");
+  });
 
   const intervalId = setInterval(() => {
-    fetch(pollingUrl)
+    fetch(pollingUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
       .then(response => {
         if (!response.ok) throw new Error("Polling failed");
         return response.json();
@@ -55,28 +58,28 @@ function startPolling(sessionId) {
         console.log("Polling data:", data);
         if (data.state == "identified") {
           // Hide qr_code_div and show identified_div
-          if (!qrCodeDiv.classList.contains("hidden")) {
-            qrCodeDiv.classList.add("hidden");
+          if (!qr_div.classList.contains("hidden")) {
+            qr_div.classList.add("hidden");
           }
-          if (identifiedDiv.classList.contains("hidden")) {
-            identifiedDiv.classList.remove("hidden");
+          if (identified_div.classList.contains("hidden")) {
+            identified_div.classList.remove("hidden");
           }
         }
-
-        else if (data.state == "authenticated") {
+        // TODO: rejected state
+        else if (data.state == "confirmed") {
           // Hide identified_div and qr_code_div, show finished_div
-          if (!qrCodeDiv.classList.contains("hidden")) {
-            qrCodeDiv.classList.add("hidden");
+          if (!qr_div.classList.contains("hidden")) {
+            qr_div.classList.add("hidden");
           }
-          if (!identifiedDiv.classList.contains("hidden")) {
-            identifiedDiv.classList.add("hidden");
+          if (!identified_div.classList.contains("hidden")) {
+            identified_div.classList.add("hidden");
           }
-          if (finishedDiv.classList.contains("hidden")) {
-            finishedDiv.classList.remove("hidden");
+          if (finished_div.classList.contains("hidden")) {
+            finished_div.classList.remove("hidden");
           }
 
           clearInterval(intervalId);
-          redirectParams = {"code": data.code, "state": params.state, "nonce": params.nonce};
+          redirectParams = {"code": data.data.oidc_data.code, "state": params.state, "nonce": params.nonce};
           window.location.href = params.redirect_uri + "?" + encodeGetParams(redirectParams);
         }
       })
