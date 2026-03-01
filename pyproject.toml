@@ -25,7 +25,7 @@ dependencies = [
     "python-multipart",
     "deepmerge",
     "python-jose",
-    "git+https://github.com/quorra-Auth/bech32"
+    "bech32 @ git+https://github.com/Quorra-Auth/bech32.git"
 ]
 
 [tool.setuptools]
