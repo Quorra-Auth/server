@@ -121,8 +121,6 @@ async def ln_authenticate(session: SessionDep, k1: str, tag: str, sig: str, key:
 def qr_gen(rq: Transaction) -> QRDataResponse:
     """Generates a QR code for the frontend"""
     tx = Transaction.load(rq.tx_type.value, rq.tx_id)
-    # TODO: Fill in the appropriate action based on the transaction type
-    # TODO: Select the right endpoint based on the TX type
     if tx.tx_type is TransactionTypes.ln_oidc_login:
         endpoint = "authenticate"
         action = "login"
