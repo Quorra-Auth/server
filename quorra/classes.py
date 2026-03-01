@@ -148,3 +148,12 @@ class AqrOIDCLoginTransactionStates(str, Enum):
     confirmed = "confirmed"
     rejected = "rejected"
     token_issued = "token-issued"
+
+
+class LNStatusEnum(str, Enum):
+    ok = "OK"
+    error = "error"
+
+class LNStatusResponse(BaseModel):
+    status: LNStatusEnum
+    reason: str | None = None

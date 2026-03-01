@@ -16,7 +16,7 @@ from sqlalchemy.exc import IntegrityError
 from ..classes import (
     User, Device,
     Transaction, TransactionTypes,
-    ErrorResponse, QRDataResponse
+    ErrorResponse, QRDataResponse, LNStatusResponse, LNStatusEnum
 )
 
 from cryptography.hazmat.primitives.asymmetric.ec import (
@@ -56,8 +56,9 @@ async def verify_signature(k1: str, sig: str, key: str) -> bool:
     return True
 
 
+# TODO: Correct error response
 @router.get("/register", response_model=None, responses={403: {"model": ErrorResponse}})
-async def ln_register(session: SessionDep, k1: str, tag: str, sig: str, key: str, action: str | None = None):
+async def ln_register(session: SessionDep, k1: str, tag: str, sig: str, key: str, action: str | None = None) -> LNStatusResponse:
     """Finishes device registration."""
     if not await verify_signature(k1, sig, key):
         raise HTTPException(status_code=403, detail="Invalid signature")
@@ -88,7 +89,7 @@ async def ln_register(session: SessionDep, k1: str, tag: str, sig: str, key: str
     session.refresh(d)
     # TODO: Pass the error back into the transaction if anything fails
     tx.set_state("finished")
-    return None
+    return LNStatusResponse(status=LNStatusEnum.ok)
 
 
 # TODO: Implement for LN
@@ -97,8 +98,9 @@ async def ln_register(session: SessionDep, k1: str, tag: str, sig: str, key: str
 #     return None
 
 
+# TODO: Correct error response
 @router.get("/authenticate", response_model=None, responses={404: {"model": ErrorResponse}})
-async def ln_authenticate(session: SessionDep, k1: str, tag: str, sig: str, key: str, action: str | None = None):
+async def ln_authenticate(session: SessionDep, k1: str, tag: str, sig: str, key: str, action: str | None = None) -> LNStatusResponse:
     if not await verify_signature(k1, sig, key):
         raise HTTPException(status_code=403, detail="Invalid signature")
     safe_k1 = escape_valkey_tag(k1)
@@ -114,7 +116,7 @@ async def ln_authenticate(session: SessionDep, k1: str, tag: str, sig: str, key:
         tx.add_private_data(".user", {"uid": user.id, "device-id": device.id})
         await store_oidc_code(tx)
         tx.set_state("confirmed")
-    return None
+    return LNStatusResponse(status=LNStatusEnum.ok)
 
 
 @router.post("/qr", responses={404: {"model": ErrorResponse}})
