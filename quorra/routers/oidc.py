@@ -97,7 +97,6 @@ async def token(db_session: SessionDep, request: Request, grant_type: str = Form
     safe_code = escape_valkey_tag(code)
     q = Query(f"@oidc_code:{{{safe_code}}}")
     res = vk.ft("idx:oidc_code").search(q)
-    print(res.total)
     if res.total == 1:
         tx_id = res.docs[0]["id"].split(":")[-1]
         tx = Transaction.load("ln-oidc-login", tx_id)
@@ -130,7 +129,6 @@ async def token(db_session: SessionDep, request: Request, grant_type: str = Form
 # TODO: Implement checking scopes
 @router.get("/userinfo", responses={401: {"model": ErrorResponse}})
 def userinfo(authorization: Annotated[str | None, Header(alias="Authorization")] = None):
-    print(authorization)
     if not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="unauthorized")
     access_token = authorization.removeprefix("Bearer ")
