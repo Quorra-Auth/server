@@ -6,7 +6,7 @@ async function getLink() {
 }
 
 async function createOnboardingLink() {
-  const response = await fetch("/onboarding/create", {
+  const response = await fetch("/processes/onboarding/create", {
     method: "GET",
     headers: {
       "Content-Type": "application/json"
@@ -22,7 +22,7 @@ async function createOnboardingLink() {
 async function startOnboardingTransaction(onboardingLink) {
   const payload = { "link_id": onboardingLink };
 
-  const response = await fetch("/onboarding/init", {
+  const response = await fetch("/processes/onboarding/init", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -39,7 +39,7 @@ async function startOnboardingTransaction(onboardingLink) {
 async function getOnboardingData() {
   const payload = { "tx_type": "onboarding", "tx_id": txId };
 
-  const response = await fetch("/onboarding/qr", {
+  const response = await fetch("/lnurl-auth/qr", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -69,7 +69,7 @@ function startOnboarding() {
     const payload = { "tx_id": txId, "data": { "username": name, "email": email }, "tx_type": "onboarding" };
 
     try {
-      const response = await fetch("/onboarding/entry", {
+      const response = await fetch("/processes/onboarding/entry", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

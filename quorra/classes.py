@@ -34,27 +34,12 @@ class QRDataResponse(BaseModel):
     qr_image: str
 
 class DeviceRegistrationRequest(SQLModel):
-    pubkey: str
+    pubkey: str = Field(unique=True)
     name: str | None = None
 
 class Device(DeviceRegistrationRequest, table=True):
     id: str = Field(primary_key=True)
     user_id: str = Field(default=None, foreign_key="user.id")
-
-
-class AQRMobileStateEnum(str, Enum):
-    accepted = "accepted"
-    rejected = "rejected"
-
-# TODO: Send a device UUID as well so that the server can get a hint
-class AQRMobileIdentifyRequest(BaseModel):
-    signature: str
-    message: str
-
-class AQRMobileAuthenticateRequest(BaseModel):
-    state: AQRMobileStateEnum
-    signature: str
-    message: str
 
 
 class TokenResponse(BaseModel):
@@ -65,7 +50,7 @@ class TokenResponse(BaseModel):
 
 class TransactionTypes(str, Enum):
     onboarding = "onboarding"
-    aqr_oidc_login = "aqr-oidc-login"
+    ln_oidc_login = "ln-oidc-login"
 
 class TransactionGetRequest(BaseModel):
     tx_type: TransactionTypes
@@ -155,7 +140,7 @@ class OnboardingTransaction(Transaction):
     tx_type: TransactionTypes = TransactionTypes.onboarding
 
 class AqrOIDCLoginTransaction(Transaction):
-    tx_type: TransactionTypes = TransactionTypes.aqr_oidc_login
+    tx_type: TransactionTypes = TransactionTypes.ln_oidc_login
 
 class AqrOIDCLoginTransactionStates(str, Enum):
     created = "created"

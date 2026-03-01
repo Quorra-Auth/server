@@ -10,9 +10,10 @@ from typing import Annotated
 
 from ..config import server_url, oidc_clients
 
-from ..classes import ErrorResponse
-from ..classes import TokenResponse
-from ..classes import User, Transaction
+from ..classes import (
+    User, Transaction,
+    TokenResponse, ErrorResponse
+)
 
 from valkey.commands.search.query import Query
 
@@ -96,9 +97,10 @@ async def token(db_session: SessionDep, request: Request, grant_type: str = Form
     safe_code = escape_valkey_tag(code)
     q = Query(f"@oidc_code:{{{safe_code}}}")
     res = vk.ft("idx:oidc_code").search(q)
+    print(res.total)
     if res.total == 1:
         tx_id = res.docs[0]["id"].split(":")[-1]
-        tx = Transaction.load("aqr-oidc-login", tx_id)
+        tx = Transaction.load("ln-oidc-login", tx_id)
     else:
         raise HTTPException(status_code=400, detail="invalid_grant")
     # Final checks before issuing the ID token
@@ -137,7 +139,7 @@ def userinfo(authorization: Annotated[str | None, Header(alias="Authorization")]
     res = vk.ft("idx:oidc_at").search(q)
     if res.total == 1:
         tx_id = res.docs[0]["id"].split(":")[-1]
-        tx = Transaction.load("aqr-oidc-login", tx_id)
+        tx = Transaction.load("ln-oidc-login", tx_id)
     else:
         raise HTTPException(status_code=401, detail="unauthorized")
     user = tx._private_data["user"]["uid"]
