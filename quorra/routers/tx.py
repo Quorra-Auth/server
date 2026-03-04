@@ -34,7 +34,7 @@ async def get_transaction(rq: TransactionGetRequest) -> Transaction:
     tx = Transaction.load(rq.tx_type.value, rq.tx_id)
     if tx is None:
         raise HTTPException(status_code=404, detail="Transaction not found")
-    if tx.state == "finished":
+    if tx.tx_type == "ln-oidc-login" and tx.state == "finished":
         raise HTTPException(status_code=403, detail="Transaction private")
     tx.prolong()
     return tx
