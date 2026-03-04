@@ -137,7 +137,7 @@ def qr_gen(rq: Transaction) -> QRDataResponse:
     elif "ln" not in tx.data or "k1" not in tx.data["ln"]:
         # TODO: Choose a more suitable status code
         raise HTTPException(status_code=404, detail="k1 not present in transaction")
-    link = "{}/lnurl-auth/{}?k1={}&tag={}&action={}".format(server_url, endpoint, tx.data["ln"]["k1"], "login", action)
+    link = "{}/lnurl-auth/{}?k1={}&tag={}&action={}&server=quorra".format(server_url, endpoint, tx.data["ln"]["k1"], "login", action)
     qr_content = "lightning:{}".format(bech32.encode_bytes("lnurl", link.encode()))
     qr_image = generate_qr(qr_content)
     return QRDataResponse(link=qr_content, qr_image=qr_image)
