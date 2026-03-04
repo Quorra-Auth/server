@@ -1,28 +1,52 @@
+:root {
+  color-scheme: light dark;
+  accent-color: var(--accent);
+
+  --bg: #f5f5f5;
+  --text: #111;
+  --card: #ffffff;
+  --muted: #666;
+  --border: #ccc;
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  --button: #007BFF;
+  --button-hover: #0056b3;
+  --accent: #007BFF;
+  --accent-text: #ffffff;
+  --accent-hover: #0056b3;
+}
+
 body {
   font-family: Arial, sans-serif;
-  padding: 40px;
-  background-color: #f5f5f5;
+  margin: 0;
+  min-height: 100dvh;
+
+  /* center the page content */
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 1.25rem;
+
+  background-color: var(--bg);
+  color: var(--text);
   text-align: center;
 }
 button {
   font-size: 18px;
   padding: 10px 20px;
-  background-color: #007BFF;
-  color: white;
+  background-color: var(--accent);
+  color: var(--accent-text);
   border: none;
   border-radius: 8px;
   cursor: pointer;
+  margin: 1rem auto;
 }
 button:hover {
-  background-color: #0056b3;
+  background-color: var(--accent-hover);
+}
+a {
+  color: var(--accent);
 }
 form {
-  max-width: 400px;
-  margin: auto;
-  padding: 2rem;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
 }
@@ -33,14 +57,26 @@ label {
 input {
   padding: 0.75rem;
   font-size: 1rem;
+  background: var(--card);
+  color: var(--text);
   border-radius: 8px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border);
   margin-bottom: 1rem;
 }
+.step_div {
+  max-width: 400px;
+  width: min(400px, 100%);
+  margin: 0;
+  padding: 2rem;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  border-radius: 12px;
+}
 #qr {
-  max-width: 25%;
+  width: clamp(220px, 70vw, 340px);
   height: auto;
-  margin: 1rem 0;
+  display: block;
+  margin: 1rem auto;
   border-radius: 8px;
 }
 .hr-text {
@@ -48,20 +84,57 @@ input {
   align-items: center;
   text-align: center;
   width: 30%;
-  margin: 2rem auto;
-  color: #666;
+  margin: 1rem auto;
+  color: var(--muted);
 }
 .hr-text::before,
 .hr-text::after {
   content: "";
   flex: 1;
-  border-top: 1px solid #ccc;
+  border-top: 1px solid var(--border);
 }
 .hr-text span {
   padding: 0 0.5em;
-  background: #f5f5f5;
+  background: var(--card);
   font-size: 0.9rem;
 }
 .hidden {
   display: none;
+}
+
+/* Dark mode overrides based on OS preference */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1115;
+    --text: #e8eaf0;
+    --card: #171a21;
+    --muted: #a7adbb;
+    --border: #2a2f3a;
+    --shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
+    --button: #3b82f6;
+    --button-hover: #2563eb;
+  }
+}
+
+/* Prefer the OS accent color when supported */
+@supports (color: AccentColor) {
+  :root {
+    --accent: AccentColor;
+    --accent-text: AccentColorText;
+  }
+}
+
+/* Nice automatic hover color derived from the accent (when supported) */
+@supports (background: color-mix(in srgb, black, white)) {
+  :root {
+    --accent-hover: color-mix(in srgb, var(--accent), black 18%);
+  }
+}
+
+/* Optional: focus ring that also follows the accent */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent), transparent 55%);
+  outline-offset: 3px;
 }

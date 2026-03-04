@@ -3,24 +3,30 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link rel="stylesheet" href="/fe/style.css"/>
+  <link rel="stylesheet" href="../style.css"/>
   <title>Quorra Onboarding</title>
 </head>
 <body>
-  <h1 id="welcome_h1">Welcome to Quorra!</h1>
-  <div id="status_container"></div>
-  <div id="initial">
-    <h2>Quorra uses a mobile token to sign you in</h2>
-    <h3>Download one of our apps to get started</h3>
+  <div id="initial" class="step_div">
+    <h1 id="welcome_h1">Welcome to Quorra!</h1>
+    <h3>Quorra allows you to sign in using QR codes</h3>
+    <p>Download one of our apps to get started:</p>
     <p><a href="https://github.com/k8ieone/voucher">Voucher</a> for Linux</p>
     <p><a href="https://github.com/Quorra-Auth/flare">Flare</a> for Android</p>
-    <button id="start_b" onclick="startOnboarding()">Proceed</button>
+    <div class="hr-text"><span>OR</span></div>
+    <p>
+      You can use your Lightning wallet, <br>
+      Quorra is powered by <a href=https://lightninglogin.live/learn>Lightning</a> ⚡
+    </p>
+    <button id="start_b" onclick="startOnboarding()">Let's get started!</button>
   </div>
 
-  <div id="details_form_div" class="hidden">
-    <h2>Please fill in your details</h2>
+  <div id="details_form_div" class="hidden step_div">
+    <h1>First, tell us a bit about you</h1>
+    <h3>Some services like to display a name and email</h3>
+    <p>Providing this information allows Quorra to pass this information along to your applications.</p>
     <form id="details_form">
-      <label for="username">Name:</label>
+      <label for="username">Username:</label>
       <input id="username_input" name="username" type="text" required />
 
       <label for="email">Email:</label>
@@ -30,17 +36,19 @@
     </form>
   </div>
 
-  <div id="qr_div" class="hidden">
-    <h2>Almost there!</h2>
-    <h3>Finish your registration by scanning this code with your mobile token</h3>
+  <div id="qr_div" class="hidden step_div">
+    <h1>Almost there!</h1>
+    <h3>Finish your registration by adding your first device</h3>
+    <p>Scan the below code using your chosen application</p>
     <img id="qr"/>
     <div class="hr-text"><span>OR</span></div>
-    <a id="local_link">Use a local install</a>
+    <a id="local_link">Use a local application</a>
   </div>
 
-  <div id="finished_div" class="hidden">
-    <h1>And you're done!</h1>
-    <h2>You can now start using your newly registered device to sign in with Quorra!</h2>
+  <div id="finished_div" class="hidden step_div">
+    <h1>Amazing!</h1>
+    <h3>✨ You're good to go ✨</h3>
+    <p>You can now start using your newly registered device to sign in with Quorra!</p>
   </div>
 
   <script src="onboarding.js"></script>
