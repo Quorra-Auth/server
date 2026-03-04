@@ -124,8 +124,10 @@ class Transaction(BaseModel):
     def set_contents(self, contents):
         vk.json().set(self._key_name, Path.root_path(), contents)
 
-    def prolong(self):
-        vk.expire(self._key_name, self._expiry)
+    def prolong(self, expiry: int | None = None):
+        if expiry is None:
+            expiry = self._expiry
+        vk.expire(self._key_name, expiry)
 
     def delete(self):
         vk.delete(self._key_name)
@@ -139,15 +141,14 @@ class OnboardingTransaction(Transaction):
     # TODO: Move transition checks here
     tx_type: TransactionTypes = TransactionTypes.onboarding
 
-class AqrOIDCLoginTransaction(Transaction):
+class LnOIDCLoginTransaction(Transaction):
     tx_type: TransactionTypes = TransactionTypes.ln_oidc_login
 
-class AqrOIDCLoginTransactionStates(str, Enum):
+class LnOIDCLoginTransactionStates(str, Enum):
     created = "created"
     identified = "identified"
     confirmed = "confirmed"
-    rejected = "rejected"
-    token_issued = "token-issued"
+    finished = "finished"
 
 
 class LNStatusEnum(str, Enum):

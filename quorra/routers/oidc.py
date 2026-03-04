@@ -108,6 +108,8 @@ async def token(db_session: SessionDep, request: Request, grant_type: str = Form
         raise HTTPException(status_code=400, detail="invalid_client")
     elif client_secret != client["client_secret"]:
         raise HTTPException(status_code=401, detail="unauthorized_client")
+    if tx.state != "confirmed":
+        raise HTTPException(status_code=401, detail="Transaction state invalid")
     user: str = tx._private_data["user"]["uid"]
     token_claims = {"sub": user, "aud": client_id, "iss": issuer}
     if "nonce" in tx.data["oidc_data"]:
@@ -121,8 +123,9 @@ async def token(db_session: SessionDep, request: Request, grant_type: str = Form
     id_token = generate_token(token_claims)
     access_token = str(uuid4())
     tx.add_private_data(".oidc_data", {"access_token": access_token})
-    tx.set_state("token-issued")
-    # TODO: Real access-tokens
+    tx.set_state("finished")
+    # TODO: Configurable AT expiry
+    tx.prolong(1500)
     return TokenResponse(id_token=id_token, access_token=access_token)
 
 
