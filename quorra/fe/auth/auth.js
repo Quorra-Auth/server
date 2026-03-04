@@ -59,24 +59,12 @@ function startPolling() {
         if (data.state == "identified") {
           // Hide qr_code_div and show identified_div
           if (!qr_div.classList.contains("hidden")) {
-            qr_div.classList.add("hidden");
-          }
-          if (identified_div.classList.contains("hidden")) {
-            identified_div.classList.remove("hidden");
+            showStep("identified_div");
           }
         }
         // TODO: rejected state
         else if (data.state == "confirmed") {
-          // Hide identified_div and qr_code_div, show finished_div
-          if (!qr_div.classList.contains("hidden")) {
-            qr_div.classList.add("hidden");
-          }
-          if (!identified_div.classList.contains("hidden")) {
-            identified_div.classList.add("hidden");
-          }
-          if (finished_div.classList.contains("hidden")) {
-            finished_div.classList.remove("hidden");
-          }
+          showStep("finished_div");
 
           clearInterval(intervalId);
           redirectParams = {"code": data.data.oidc_data.code, "state": params.state, "nonce": params.nonce};

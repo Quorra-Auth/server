@@ -3,29 +3,30 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link rel="stylesheet" href="/fe/style.css"/>
+  <link rel="stylesheet" href="../style.css"/>
   <title>Quorra</title>
 </head>
 <body>
 
-  <h1>Quorra</h1>
-  <div id="qr_div">
-    <h2>Scan this QR code on your device</h2>
+  <div id="qr_div" class="step_div">
+    <h1>Welcome back to Quorra</h1>
+    <p>Scan the below code using your device</p>
     <img alt="AQR Code" id="qr"></img>
     <div class="hr-text"><span>OR</span></div>
     <a id="local_link">Use a local install</a>
   </div>
 
-  <div id="identified_div" class="hidden">
+  <div id="identified_div" class="hidden step_div">
     <h2>Waiting for confirmation on your device...</h2>
   </div>
 
-  <div id="finished_div" class="hidden">
-    <h2>And you're logged in!</h2>
-    <h3>We're redirecting you back to the application</h3>
+  <div id="finished_div" class="hidden step_div">
+    <h2>✨ And you're logged in! ✨</h2>
+    <p>We're redirecting you back to the application...</p>
   </div>
 
   <script src="auth.js"></script>
+  <script src="../transitions.js"></script>
 </body>
 </html>
 
