@@ -57,8 +57,7 @@ function startOnboarding() {
   const params = new Proxy(new URLSearchParams(window.location.search), {
     get: (searchParams, prop) => searchParams.get(prop),
   });
-  document.getElementById("initial").classList.add("hidden");
-  document.getElementById("details_form_div").classList.remove("hidden");
+  showStep("details_form_div");
 
   document.getElementById("details_form").addEventListener("submit", async function(e) {
     e.preventDefault();
@@ -80,10 +79,9 @@ function startOnboarding() {
       const result = await response.json();
       const onboardingData = await getOnboardingData();
 
-      document.getElementById("details_form_div").classList.add("hidden");
-      document.getElementById("qr_div").classList.remove("hidden");
       document.getElementById("qr").src = onboardingData.qr_image;
       document.getElementById("local_link").href = onboardingData.link;
+      showStep("qr_div");
 
     } catch (error) {
       console.error(error);
@@ -112,9 +110,7 @@ function startPolling() {
         if (data.state == "finished") {
           // Hide qr_code_div and show identified_div
           clearInterval(intervalId);
-          document.getElementById("qr_div").classList.add("hidden");
-          document.getElementById("welcome_h1").classList.add("hidden");
-          document.getElementById("finished_div").classList.remove("hidden");
+          showStep("finished_div");
         }
       })
       .catch(error => {

@@ -71,6 +71,19 @@ input {
   background: var(--card);
   box-shadow: var(--shadow);
   border-radius: 12px;
+  transition: opacity 220ms ease, transform 220ms ease;
+  will-change: opacity, transform;
+}
+/* Exit animation */
+.step_div.is-exiting {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* Enter animation (starts hidden-looking, then animates to normal) */
+.step_div.is-entering {
+  opacity: 0;
+  transform: translateY(10px);
 }
 #qr {
   width: clamp(220px, 70vw, 340px);
@@ -137,4 +150,11 @@ a:focus-visible,
 input:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--accent), transparent 55%);
   outline-offset: 3px;
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .step_div {
+    transition: none;
+  }
 }
