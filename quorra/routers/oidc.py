@@ -125,7 +125,7 @@ async def token(db_session: SessionDep, request: Request, grant_type: str = Form
     tx.add_private_data(".oidc_data", {"access_token": access_token})
     tx.set_state("finished")
     # TODO: Configurable AT expiry
-    tx.prolong(1500)
+    tx.prolong(1800)
     return TokenResponse(id_token=id_token, access_token=access_token)
 
 
