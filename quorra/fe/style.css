@@ -65,8 +65,7 @@ input {
 }
 .step_div {
   max-width: 400px;
-  width: min(400px, 100%);
-  margin: 0;
+  margin: 20%;
   padding: 2rem;
   background: var(--card);
   box-shadow: var(--shadow);
