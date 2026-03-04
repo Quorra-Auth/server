@@ -61,7 +61,7 @@ async def authorize(client_id: str, redirect_uri: str, state: str, scope: str, n
         raise HTTPException(status_code=400, detail="Invalid client")
     if redirect_uri not in client["redirect_uris"]:
         raise HTTPException(status_code=400, detail="Invalid client")
-    args = {"client_id": client_id, "redirect_uri": redirect_uri, "state": state, "scope": scope}
+    args = {"client_id": client_id, "redirect_uri": redirect_uri, "state": state, "scope": scope, "client_name": client["friendly_name"]}
     if nonce is not None:
         args["nonce"] = nonce
     redirect_url = url_encoder("/fe/auth/", **args)

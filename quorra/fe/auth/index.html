@@ -9,8 +9,10 @@
 <body>
 
   <div id="qr_div" class="step_div">
-    <h1>Welcome back to Quorra</h1>
-    <p>Scan the below code using your device</p>
+    <h2>You're signing into</h2>
+    <h1><span class="clientName"></span></h1>
+    <small class="redirectURI"></small>
+    <p>Scan the below code using your device to proceed</p>
     <img alt="AQR Code" id="qr"></img>
     <div class="hr-text"><span>OR</span></div>
     <a id="local_link">Use a local install</a>
@@ -22,7 +24,8 @@
 
   <div id="finished_div" class="hidden step_div">
     <h2>✨ And you're logged in! ✨</h2>
-    <p>We're redirecting you back to the application...</p>
+    <p>We're redirecting you back to <span class="clientName">the application</span>...</p>
+    <small>If the redirect doesn't work, click <a id="manual_redirect">here</a></small>
   </div>
 
   <script src="auth.js"></script>

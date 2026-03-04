@@ -4,6 +4,12 @@ window.onload = async function() {
   await startAqr();
 };
 
+async function findReplace(objClass, text) {
+  document.querySelectorAll(`.${objClass}`).forEach(el => {
+    el.textContent = text;
+  });
+}
+
 async function startAqr() {
   const params = new Proxy(new URLSearchParams(window.location.search), {
   get: (searchParams, prop) => searchParams.get(prop),
@@ -16,6 +22,13 @@ async function startAqr() {
   if (!response.ok) throw new Error("Request failed");
   data = await response.json();
   txId = data.tx_id;
+  await findReplace("clientName", params.client_name);
+  const url = new URL(params.redirect_uri);
+  var urlString = url.origin
+  if (url.protocol !== "https:") {
+    urlString = `⚠️ ${url.origin} ⚠️`
+  }
+  await findReplace("redirectURI", urlString);
   await showQrCode();
   startPolling();
 }
@@ -55,7 +68,6 @@ function startPolling() {
         return response.json();
       })
       .then(data => {
-        console.log("Polling data:", data);
         if (data.state == "identified") {
           // Hide qr_code_div and show identified_div
           if (!qr_div.classList.contains("hidden")) {
@@ -68,7 +80,9 @@ function startPolling() {
 
           clearInterval(intervalId);
           redirectParams = {"code": data.data.oidc_data.code, "state": params.state, "nonce": params.nonce};
-          window.location.href = params.redirect_uri + "?" + encodeGetParams(redirectParams);
+          const redirectAddress = params.redirect_uri + "?" + encodeGetParams(redirectParams);
+          manual_redirect.href = redirectAddress;
+          window.location.href = redirectAddress;
         }
       })
       .catch(error => {
