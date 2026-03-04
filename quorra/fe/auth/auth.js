@@ -12,7 +12,7 @@ async function startAqr() {
   if (params.nonce) {
     args = args + `&nonce=${params.nonce}`
   }
-  const response = await fetch(`/processes/login/start?${args}`);
+  const response = await fetch(`../../processes/login/start?${args}`);
   if (!response.ok) throw new Error("Request failed");
   data = await response.json();
   txId = data.tx_id;
@@ -22,7 +22,7 @@ async function startAqr() {
 
 async function showQrCode() {
   const payload = { "tx_type": "ln-oidc-login", "tx_id": txId };
-  const response = await fetch("/lnurl-auth/qr", {
+  const response = await fetch("../../lnurl-auth/qr", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -35,7 +35,7 @@ async function showQrCode() {
 }
 
 function startPolling() {
-  const pollingUrl = `/tx/transaction`;
+  const pollingUrl = `../../tx/transaction`;
   const payload = { "tx_id": txId, "tx_type": "ln-oidc-login" }
 
   const encodeGetParams = p =>

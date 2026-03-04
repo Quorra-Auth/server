@@ -31,7 +31,6 @@ dependencies = [
 [tool.setuptools]
 packages = ["quorra", "quorra.routers"]
 
-# Doesn't work, need to figure out how to add static files to Python project
 [tool.setuptools.package-data]
 "quorra" = ["fe/**"]
 
