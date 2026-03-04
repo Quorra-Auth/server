@@ -42,8 +42,6 @@ async def create(session: SessionDep, x_self_service_token: Annotated[str | None
     session.add(link)
     session.commit()
     session.refresh(link)
-    print("Debug only!!!")
-    print("http://localhost:8080/fe/onboard/index.html?link={}".format(link.link_id))
     return link
 
 @router.post("/init", responses={404: {"model": ErrorResponse}})

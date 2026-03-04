@@ -107,8 +107,8 @@ app.include_router(oidc.router, prefix="/oidc", tags=["OIDC"])
 app.include_router(tx.router, prefix="/tx", tags=["Transaction management"])
 
 fe_dir = importlib.resources.files("quorra") / "fe"
-app.mount("/fe", StaticFiles(directory=fe_dir), name="static")
+app.mount("/fe", StaticFiles(directory=fe_dir, html=True), name="static")
 
 @app.get("/", include_in_schema=False)
 async def root_redirect():
-    return RedirectResponse(url="/fe/onboard/index.html")
+    return RedirectResponse(url="/fe/onboard/")
