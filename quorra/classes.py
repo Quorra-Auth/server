@@ -69,7 +69,7 @@ class Transaction(BaseModel):
     tx_id: str | None = None
 
     # TODO: shorten
-    _expiry: int = 500
+    _expiry: int = 30
     _key_name: str | None = None
 
     def __init__(self, **data):
