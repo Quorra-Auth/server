@@ -65,8 +65,9 @@ input {
 }
 .step_div {
   max-width: 400px;
-  margin: 20%;
-  padding: 2rem;
+  min-width: 320px;
+  margin: 10%;
+  padding: 1.25rem;
   background: var(--card);
   box-shadow: var(--shadow);
   border-radius: 12px;
@@ -85,7 +86,7 @@ input {
   transform: translateY(10px);
 }
 #qr {
-  width: clamp(220px, 70vw, 340px);
+  width: 90%;
   height: auto;
   display: block;
   margin: 1rem auto;
