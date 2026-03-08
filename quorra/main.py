@@ -9,15 +9,12 @@ import importlib.resources
 
 from . import __version__
 
-from .routers import onboarding
-from .routers import mobile
-from .routers import login
-from .routers import oidc
-from .routers import tx
+from .routers import (
+    onboarding, login,
+    lnurlauth, oidc, tx
+)
 
-from .database import engine
-from .database import SessionDep
-from .database import vk
+from .database import engine, SessionDep, vk
 
 from valkey.exceptions import ResponseError
 from valkey.commands.search.field import TagField
@@ -35,15 +32,15 @@ async def prep_valkey():
     await create_oidc_at_index()
 
 async def create_drt_index():
-    idx = vk.ft("idx:device_registration_token")
-    schema = (TagField("$.data.device_registration.token", as_name="device_registration_token"))
+    idx = vk.ft("idx:ln_k1")
+    schema = (TagField("$.data.ln.k1", as_name="ln_k1"))
     try:
         idx.info()
     except ResponseError:
         idx.create_index(
             schema,
             definition=IndexDefinition(
-                prefix=["onboarding:"],
+                prefix=["ln-oidc-login:", "onboarding:"],
                 index_type=IndexType.JSON
             )
         )
@@ -59,7 +56,7 @@ async def create_oidc_code_index():
         idx.create_index(
             schema,
             definition=IndexDefinition(
-                prefix=["aqr-oidc-login:"],
+                prefix=["ln-oidc-login:"],
                 index_type=IndexType.JSON
             )
         )
@@ -75,7 +72,7 @@ async def create_oidc_at_index():
         idx.create_index(
             schema,
             definition=IndexDefinition(
-                prefix=["aqr-oidc-login:"],
+                prefix=["ln-oidc-login:"],
                 index_type=IndexType.JSON
             )
         )
@@ -103,15 +100,15 @@ async def healthcheck(session: SessionDep):
     return {"health": "ok"}
 
 
-app.include_router(onboarding.router, prefix="/onboarding", tags=["New user onboarding"])
-app.include_router(login.router, prefix="/login", tags=["Login session management"])
-app.include_router(mobile.router, prefix="/mobile", tags=["Mobile endpoints"])
+app.include_router(onboarding.router, prefix="/processes/onboarding", tags=["Onboarding process endpoints"])
+app.include_router(login.router, prefix="/processes/login", tags=["Login process endpoints"])
+app.include_router(lnurlauth.router, prefix="/lnurl-auth", tags=["Lightning login endpoints"])
 app.include_router(oidc.router, prefix="/oidc", tags=["OIDC"])
 app.include_router(tx.router, prefix="/tx", tags=["Transaction management"])
 
 fe_dir = importlib.resources.files("quorra") / "fe"
-app.mount("/fe", StaticFiles(directory=fe_dir), name="static")
+app.mount("/fe", StaticFiles(directory=fe_dir, html=True), name="static")
 
 @app.get("/", include_in_schema=False)
 async def root_redirect():
-    return RedirectResponse(url="/fe/onboard/index.html")
+    return RedirectResponse(url="/fe/onboard/")

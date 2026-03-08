@@ -4,6 +4,12 @@ window.onload = async function() {
   await startAqr();
 };
 
+async function findReplace(objClass, text) {
+  document.querySelectorAll(`.${objClass}`).forEach(el => {
+    el.textContent = text;
+  });
+}
+
 async function startAqr() {
   const params = new Proxy(new URLSearchParams(window.location.search), {
   get: (searchParams, prop) => searchParams.get(prop),
@@ -12,17 +18,24 @@ async function startAqr() {
   if (params.nonce) {
     args = args + `&nonce=${params.nonce}`
   }
-  const response = await fetch(`/login/start?${args}`);
+  const response = await fetch(`../../processes/login/start?${args}`);
   if (!response.ok) throw new Error("Request failed");
   data = await response.json();
   txId = data.tx_id;
+  await findReplace("clientName", params.client_name);
+  const url = new URL(params.redirect_uri);
+  var urlString = url.origin
+  if (url.protocol !== "https:") {
+    urlString = `⚠️ ${url.origin} ⚠️`
+  }
+  await findReplace("redirectURI", urlString);
   await showQrCode();
   startPolling();
 }
 
 async function showQrCode() {
-  const payload = { "tx_type": "aqr-oidc-login", "tx_id": txId };
-  const response = await fetch("/login/qr", {
+  const payload = { "tx_type": "ln-oidc-login", "tx_id": txId };
+  const response = await fetch("../../lnurl-auth/qr", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -35,8 +48,8 @@ async function showQrCode() {
 }
 
 function startPolling() {
-  const pollingUrl = `/tx/transaction`;
-  const payload = { "tx_id": txId, "tx_type": "aqr-oidc-login" }
+  const pollingUrl = `../../tx/transaction`;
+  const payload = { "tx_id": txId, "tx_type": "ln-oidc-login" }
 
   const encodeGetParams = p =>
     Object.entries(p).map(kv => kv.map(encodeURIComponent).join("=")).join("&");
@@ -55,32 +68,21 @@ function startPolling() {
         return response.json();
       })
       .then(data => {
-        console.log("Polling data:", data);
         if (data.state == "identified") {
           // Hide qr_code_div and show identified_div
           if (!qr_div.classList.contains("hidden")) {
-            qr_div.classList.add("hidden");
-          }
-          if (identified_div.classList.contains("hidden")) {
-            identified_div.classList.remove("hidden");
+            showStep("identified_div");
           }
         }
         // TODO: rejected state
         else if (data.state == "confirmed") {
-          // Hide identified_div and qr_code_div, show finished_div
-          if (!qr_div.classList.contains("hidden")) {
-            qr_div.classList.add("hidden");
-          }
-          if (!identified_div.classList.contains("hidden")) {
-            identified_div.classList.add("hidden");
-          }
-          if (finished_div.classList.contains("hidden")) {
-            finished_div.classList.remove("hidden");
-          }
+          showStep("finished_div");
 
           clearInterval(intervalId);
           redirectParams = {"code": data.data.oidc_data.code, "state": params.state, "nonce": params.nonce};
-          window.location.href = params.redirect_uri + "?" + encodeGetParams(redirectParams);
+          const redirectAddress = params.redirect_uri + "?" + encodeGetParams(redirectParams);
+          manual_redirect.href = redirectAddress;
+          window.location.href = redirectAddress;
         }
       })
       .catch(error => {

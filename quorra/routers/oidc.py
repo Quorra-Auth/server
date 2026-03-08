@@ -10,9 +10,10 @@ from typing import Annotated
 
 from ..config import server_url, oidc_clients
 
-from ..classes import ErrorResponse
-from ..classes import TokenResponse
-from ..classes import User, Transaction
+from ..classes import (
+    User, Transaction,
+    TokenResponse, ErrorResponse
+)
 
 from valkey.commands.search.query import Query
 
@@ -60,10 +61,10 @@ async def authorize(client_id: str, redirect_uri: str, state: str, scope: str, n
         raise HTTPException(status_code=400, detail="Invalid client")
     if redirect_uri not in client["redirect_uris"]:
         raise HTTPException(status_code=400, detail="Invalid client")
-    args = {"client_id": client_id, "redirect_uri": redirect_uri, "state": state, "scope": scope}
+    args = {"client_id": client_id, "redirect_uri": redirect_uri, "state": state, "scope": scope, "client_name": client["friendly_name"]}
     if nonce is not None:
         args["nonce"] = nonce
-    redirect_url = url_encoder("/fe/auth/index.html", **args)
+    redirect_url = url_encoder("/fe/auth/", **args)
     return RedirectResponse(url=redirect_url)
 
 
@@ -98,7 +99,7 @@ async def token(db_session: SessionDep, request: Request, grant_type: str = Form
     res = vk.ft("idx:oidc_code").search(q)
     if res.total == 1:
         tx_id = res.docs[0]["id"].split(":")[-1]
-        tx = Transaction.load("aqr-oidc-login", tx_id)
+        tx = Transaction.load("ln-oidc-login", tx_id)
     else:
         raise HTTPException(status_code=400, detail="invalid_grant")
     # Final checks before issuing the ID token
@@ -107,6 +108,8 @@ async def token(db_session: SessionDep, request: Request, grant_type: str = Form
         raise HTTPException(status_code=400, detail="invalid_client")
     elif client_secret != client["client_secret"]:
         raise HTTPException(status_code=401, detail="unauthorized_client")
+    if tx.state != "confirmed":
+        raise HTTPException(status_code=401, detail="Transaction state invalid")
     user: str = tx._private_data["user"]["uid"]
     token_claims = {"sub": user, "aud": client_id, "iss": issuer}
     if "nonce" in tx.data["oidc_data"]:
@@ -120,15 +123,15 @@ async def token(db_session: SessionDep, request: Request, grant_type: str = Form
     id_token = generate_token(token_claims)
     access_token = str(uuid4())
     tx.add_private_data(".oidc_data", {"access_token": access_token})
-    tx.set_state("token-issued")
-    # TODO: Real access-tokens
+    tx.set_state("finished")
+    # TODO: Configurable AT expiry
+    tx.prolong(1800)
     return TokenResponse(id_token=id_token, access_token=access_token)
 
 
 # TODO: Implement checking scopes
 @router.get("/userinfo", responses={401: {"model": ErrorResponse}})
 def userinfo(authorization: Annotated[str | None, Header(alias="Authorization")] = None):
-    print(authorization)
     if not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="unauthorized")
     access_token = authorization.removeprefix("Bearer ")
@@ -137,7 +140,7 @@ def userinfo(authorization: Annotated[str | None, Header(alias="Authorization")]
     res = vk.ft("idx:oidc_at").search(q)
     if res.total == 1:
         tx_id = res.docs[0]["id"].split(":")[-1]
-        tx = Transaction.load("aqr-oidc-login", tx_id)
+        tx = Transaction.load("ln-oidc-login", tx_id)
     else:
         raise HTTPException(status_code=401, detail="unauthorized")
     user = tx._private_data["user"]["uid"]

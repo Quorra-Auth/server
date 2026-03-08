@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = 'quorra'
 dynamic = ["version"]
-description = 'Quorra API server'
+description = 'Quorra server'
 readme = 'README.md'
 requires-python = '>=3.8'
 license = {file = 'LICENSE'}
@@ -24,13 +24,13 @@ dependencies = [
     "pillow",
     "python-multipart",
     "deepmerge",
-    "python-jose"
+    "python-jose",
+    "bech32 @ git+https://github.com/Quorra-Auth/bech32.git"
 ]
 
 [tool.setuptools]
 packages = ["quorra", "quorra.routers"]
 
-# Doesn't work, need to figure out how to add static files to Python project
 [tool.setuptools.package-data]
 "quorra" = ["fe/**"]
 

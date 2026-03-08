@@ -34,27 +34,12 @@ class QRDataResponse(BaseModel):
     qr_image: str
 
 class DeviceRegistrationRequest(SQLModel):
-    pubkey: str
+    pubkey: str = Field(unique=True)
     name: str | None = None
 
 class Device(DeviceRegistrationRequest, table=True):
     id: str = Field(primary_key=True)
     user_id: str = Field(default=None, foreign_key="user.id")
-
-
-class AQRMobileStateEnum(str, Enum):
-    accepted = "accepted"
-    rejected = "rejected"
-
-# TODO: Send a device UUID as well so that the server can get a hint
-class AQRMobileIdentifyRequest(BaseModel):
-    signature: str
-    message: str
-
-class AQRMobileAuthenticateRequest(BaseModel):
-    state: AQRMobileStateEnum
-    signature: str
-    message: str
 
 
 class TokenResponse(BaseModel):
@@ -65,7 +50,7 @@ class TokenResponse(BaseModel):
 
 class TransactionTypes(str, Enum):
     onboarding = "onboarding"
-    aqr_oidc_login = "aqr-oidc-login"
+    ln_oidc_login = "ln-oidc-login"
 
 class TransactionGetRequest(BaseModel):
     tx_type: TransactionTypes
@@ -84,7 +69,7 @@ class Transaction(BaseModel):
     tx_id: str | None = None
 
     # TODO: shorten
-    _expiry: int = 500
+    _expiry: int = 30
     _key_name: str | None = None
 
     def __init__(self, **data):
@@ -139,8 +124,10 @@ class Transaction(BaseModel):
     def set_contents(self, contents):
         vk.json().set(self._key_name, Path.root_path(), contents)
 
-    def prolong(self):
-        vk.expire(self._key_name, self._expiry)
+    def prolong(self, expiry: int | None = None):
+        if expiry is None:
+            expiry = self._expiry
+        vk.expire(self._key_name, expiry)
 
     def delete(self):
         vk.delete(self._key_name)
@@ -154,12 +141,20 @@ class OnboardingTransaction(Transaction):
     # TODO: Move transition checks here
     tx_type: TransactionTypes = TransactionTypes.onboarding
 
-class AqrOIDCLoginTransaction(Transaction):
-    tx_type: TransactionTypes = TransactionTypes.aqr_oidc_login
+class LnOIDCLoginTransaction(Transaction):
+    tx_type: TransactionTypes = TransactionTypes.ln_oidc_login
 
-class AqrOIDCLoginTransactionStates(str, Enum):
+class LnOIDCLoginTransactionStates(str, Enum):
     created = "created"
     identified = "identified"
     confirmed = "confirmed"
-    rejected = "rejected"
-    token_issued = "token-issued"
+    finished = "finished"
+
+
+class LNStatusEnum(str, Enum):
+    ok = "OK"
+    error = "error"
+
+class LNStatusResponse(BaseModel):
+    status: LNStatusEnum
+    reason: str | None = None
