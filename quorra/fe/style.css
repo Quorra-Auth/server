@@ -11,7 +11,8 @@
 
   /* fallback for browsers without native accent colors */
   --accent-text: #ffffff;
-  --accent: #007BFF;
+  /* red so it's obvious */
+  --accent: #FF0000;
 }
 
 body {
@@ -129,6 +130,7 @@ input {
 /* Prefer the OS accent color when supported */
 @supports (color: AccentColor) {
   :root {
+    accent-color: auto;
     --accent: AccentColor;
     --accent-text: AccentColorText;
   }
