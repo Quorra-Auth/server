@@ -2,17 +2,16 @@
   color-scheme: light dark;
   accent-color: var(--accent);
 
-  --bg: #f5f5f5;
-  --text: #111;
-  --card: #ffffff;
-  --muted: #666;
-  --border: #ccc;
-  --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  --button: #007BFF;
-  --button-hover: #0056b3;
-  --accent: #007BFF;
+  --bg: color-mix(in srgb, Canvas 96%, black);
+  --text: CanvasText;
+  --card: Canvas;
+  --muted: color-mix(in srgb, GrayText 70%, white);
+  --border: color-mix(in srgb, GrayText 50%, white);
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+
+  /* fallback for browsers without native accent colors */
   --accent-text: #ffffff;
-  --accent-hover: #0056b3;
+  --accent: #007BFF;
 }
 
 body {
@@ -96,7 +95,7 @@ input {
   display: flex;
   align-items: center;
   text-align: center;
-  width: 30%;
+  width: 60%;
   margin: 1rem auto;
   color: var(--muted);
 }
@@ -118,14 +117,12 @@ input {
 /* Dark mode overrides based on OS preference */
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0f1115;
-    --text: #e8eaf0;
-    --card: #171a21;
-    --muted: #a7adbb;
-    --border: #2a2f3a;
+    --bg: Canvas;
+    --text: CanvasText;
+    --card: color-mix(in srgb, Canvas 92%, white);
+    --muted: color-mix(in srgb, GrayText 70%, white);
+    --border: color-mix(in srgb, GrayText 50%, black);
     --shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
-    --button: #3b82f6;
-    --button-hover: #2563eb;
   }
 }
 
