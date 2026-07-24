@@ -6,13 +6,13 @@ This project is in its very early stages. Tame your expectations and excercise c
 
 Quorra is an OIDC compatible IDP (identity provider).
 
-While other providers either use a password, WebAuthn, OTPs or a combination of the three, Quorra uses asymetric encryption. The private key is stored on a device running one of Quorra's authenticator apps.
+While other providers either use a password, WebAuthn, OTPs or a combination of the three, Quorra uses asymetric encryption. The private key is stored on a device running one of Quorra's keychain apps.
 
 It doesn't aim to be a replacement for other identity providers, instead Quorra is meant to be used *alongisde* other more full-featured IDPs like [Authentik](https://goauthentik.io/), [Zitadel](https://zitadel.com/), [Keyloak](https://keycloak.org/), [Dex](https://dexidp.io/), etc.
 
 As such, Quorra only implements a fairly minimal set of OIDC features and doesn't provide any access controls. It wasn't created to plug directly into your applications, it is to be used as an external identity provider for your existing IDP.
 
-For simple use-cases without the need for fine-grained access policies it can be used as a standalone IDP.
+For simple use-cases without the need for fine-grained access policies it can be used by your applications directly.
 
 ## Can I see?
 
@@ -31,7 +31,7 @@ As a starting point we provide apps for two platforms:
 
 We hope developers will pick up development of their own authenticator apps for Quorra.
 
-The API is documented using OpenAPI and we try to keep it simple.
+The API is documented using OpenAPI and we try to keep it simple. Implementing basic [LNURL-auth (LUD-04)](https://github.com/lnurl/luds/blob/luds/04.md) is enough to make your authenticator application work with Quorra.
 
 ## How does it work?
 
@@ -39,10 +39,10 @@ Everything in Quorra is based either on short-term random secrets or asymetric e
 
 ## Is this safe?
 
-This project is not ready for production use yet and it is too early to start chasing down potential security issues. Anything can change at any point.
+This project is not ready for production use yet and it is too early to start chasing down potential security issues. Anything can change at any point. DO NOT USE IN PRODUCTION unless you're okay with getting pwned.
 
 ## How do I deploy this?
 
 TODO
 
-If you're ready to start playing with Quorra...
+If you're ready to start playing with Quorra... TBD
