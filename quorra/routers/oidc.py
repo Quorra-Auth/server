@@ -6,7 +6,10 @@ from fastapi import Security
 from urllib.parse import urlencode
 from sqlmodel import select
 from uuid import uuid4
-from typing import Annotated
+from base64 import urlsafe_b64encode
+from hashlib import sha256
+from hmac import compare_digest
+from typing import Annotated, Literal
 
 from ..config import server_url, oidc_clients
 
@@ -44,8 +47,15 @@ def config():
         "token_endpoint": f"{issuer}/token",
         "userinfo_endpoint": f"{issuer}/userinfo",
         "jwks_uri": f"{issuer}/.well-known/jwks.json",
+        "scopes_supported": ["openid", "profile", "email"],
+        "claims_supported": ["sub", "aud", "iss", "nonce", "nickname", "email"],
+        "grant_types_supported": ["authorization_code"],
         "response_types_supported": ["code"],
-        "id_token_signing_alg_values_supported": ["RS256"]
+        "response_modes_supported": ["query"],
+        "subject_types_supported": ["public"],
+        "token_endpoint_auth_methods_supported": ["client_secret_basic", "client_secret_post", "none"],
+        "id_token_signing_alg_values_supported": ["RS256"],
+        "code_challenge_methods_supported": ["S256"]
     }
 
 
@@ -55,7 +65,9 @@ def jwks():
 
 
 @router.get("/authorize", status_code=307, responses={400: {"model": ErrorResponse}})
-async def authorize(client_id: str, redirect_uri: str, state: str, scope: str, nonce: str | None = None, response_type: str = "code") -> RedirectResponse:
+async def authorize(client_id: str, redirect_uri: str, state: str, scope: str, code_challenge: str | None = None, code_challenge_method: Literal["S256"] | None = None, nonce: str | None = None, response_type: str = "code") -> RedirectResponse:
+    if "openid" not in scope:
+        raise HTTPException(status_code=400, detail="The 'openid' scope is always required")
     client = find_client(client_id)
     if client is None:
         raise HTTPException(status_code=400, detail="Invalid client")
@@ -64,19 +76,26 @@ async def authorize(client_id: str, redirect_uri: str, state: str, scope: str, n
     args = {"client_id": client_id, "redirect_uri": redirect_uri, "state": state, "scope": scope, "client_name": client["friendly_name"]}
     if nonce is not None:
         args["nonce"] = nonce
+    if code_challenge_method is not None:
+        args["code_challenge_method"] = code_challenge_method
+    if code_challenge is not None:
+        args["code_challenge"] = code_challenge
     redirect_url = url_encoder("/fe/auth/", **args)
     return RedirectResponse(url=redirect_url)
 
 
 def get_client_credentials(
     request: Request,
-    form_client_id: str = Form(None),
-    form_client_secret: str = Form(None),
+    form_client_id: str = Form(None, alias="client_id"),
+    form_client_secret: str = Form(None, alias="client_secret"),
     basic_creds: HTTPBasicCredentials = Security(security_scheme)
 ):
     # Prefer HTTP Basic
-    if basic_creds and basic_creds.username and basic_creds.password:
-        return basic_creds.username, basic_creds.password
+    if basic_creds and basic_creds.username:
+        creds: tuple[str, str] | tuple[str, None] = (basic_creds.username, None)
+        if basic_creds.password:
+            creds = (basic_creds.username, basic_creds.password)
+        return creds
 
     # Fallback to form
     return form_client_id, form_client_secret
@@ -88,7 +107,7 @@ async def store_oidc_code(tx: Transaction):
 
 
 @router.post("/token", responses={400: {"model": ErrorResponse}, 401: {"model": ErrorResponse}})
-async def token(db_session: SessionDep, request: Request, grant_type: str = Form(...), code: str = Form(...), creds: tuple[str, str] = Depends(get_client_credentials)) -> TokenResponse:
+async def token(db_session: SessionDep, request: Request, grant_type: str = Form(...), code: str = Form(...), code_verifier: str | None = Form(None), creds: tuple[str, str] | tuple[str, None] = Depends(get_client_credentials)) -> TokenResponse:
     # Other grants are not supported
     if grant_type != "authorization_code":
         raise HTTPException(status_code=400, detail="invalid_grant")
@@ -106,7 +125,16 @@ async def token(db_session: SessionDep, request: Request, grant_type: str = Form
     client = find_client(client_id)
     if tx.data["oidc_data"]["client-id"] != client_id:
         raise HTTPException(status_code=400, detail="invalid_client")
-    elif client_secret != client["client_secret"]:
+    elif client_secret is None:
+        if code_verifier is None:
+            raise HTTPException(status_code=400, detail="missing_code_verifier")
+        elif "code_challenge" not in tx.data["oidc_data"]:
+            raise HTTPException(status_code=400, detail="transaction_missing_code_challenge")
+        else:
+            verifier = urlsafe_b64encode(sha256(code_verifier.encode(), usedforsecurity=True).digest()).rstrip(b"=")
+            if not compare_digest(verifier, tx.data["oidc_data"]["code_challenge"].encode()):
+                raise HTTPException(status_code=401, detail="code_challenge_failed")
+    elif "client_secret" not in client or client_secret != client["client_secret"]:
         raise HTTPException(status_code=401, detail="unauthorized_client")
     if tx.state != "confirmed":
         raise HTTPException(status_code=401, detail="Transaction state invalid")

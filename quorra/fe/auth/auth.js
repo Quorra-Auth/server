@@ -18,6 +18,12 @@ async function startAqr() {
   if (params.nonce) {
     args = args + `&nonce=${params.nonce}`
   }
+  if (params.code_challenge_method) {
+    args = args + `&code_challenge_method=${params.code_challenge_method}`
+  }
+  if (params.code_challenge) {
+    args = args + `&code_challenge=${params.code_challenge}`
+  }
   const response = await fetch(`../../processes/login/start?${args}`);
   if (!response.ok) throw new Error("Request failed");
   data = await response.json();
