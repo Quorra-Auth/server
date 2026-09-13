@@ -125,7 +125,7 @@ async def token(db_session: SessionDep, request: Request, grant_type: str = Form
         raise HTTPException(status_code=400, detail="invalid_grant")
     # Final checks before issuing the ID token
     client = find_client(client_id)
-    if tx.data["oidc_data"]["client-id"] != client_id:
+    if client is None or tx.data["oidc_data"]["client-id"] != client_id:
         raise HTTPException(status_code=400, detail="invalid_client")
     elif client_secret is None:
         if code_verifier is None:
