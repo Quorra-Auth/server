@@ -7,7 +7,7 @@ name = 'quorra'
 dynamic = ["version"]
 description = 'Quorra server'
 readme = 'README.md'
-requires-python = '>=3.8'
+requires-python = '>=3.10'
 license = {file = 'LICENSE'}
 authors = [
     {name = 'Kateřina Medvědová', email = 'k8ie@mcld.eu'},
