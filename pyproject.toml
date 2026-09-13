@@ -25,14 +25,15 @@ dependencies = [
     "python-multipart",
     "deepmerge",
     "python-jose",
-    "bech32 @ git+https://github.com/Quorra-Auth/bech32.git"
+    "bech32 @ git+https://github.com/Quorra-Auth/bech32.git",
+    "alembic"
 ]
 
 [tool.setuptools]
 packages = ["quorra", "quorra.routers"]
 
 [tool.setuptools.package-data]
-"quorra" = ["fe/**"]
+"quorra" = ["fe/**", "migrations/**"]
 
 [tool.setuptools.dynamic]
 version = {attr = "quorra.__version__"}

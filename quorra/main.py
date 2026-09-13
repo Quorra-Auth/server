@@ -1,11 +1,14 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
-from sqlmodel import SQLModel, select
+from sqlmodel import select
 
 from contextlib import asynccontextmanager
 
 import importlib.resources
+
+from alembic.config import Config as AlembicConfig
+from alembic import command as alembic_command
 
 from . import __version__
 
@@ -15,13 +18,18 @@ from .routers import (
 )
 
 from .database import engine, SessionDep, vk
+from .config import config as quorra_config
 
 from valkey.exceptions import ResponseError
 from valkey.commands.search.field import TagField
 from valkey.commands.search.indexDefinition import IndexDefinition, IndexType
 
 async def migrate():
-    SQLModel.metadata.create_all(engine)
+    migrations_dir = importlib.resources.files("quorra") / "migrations"
+    alembic_cfg = AlembicConfig()
+    alembic_cfg.set_main_option("script_location", str(migrations_dir))
+    alembic_cfg.set_main_option("sqlalchemy.url", quorra_config["database"]["sql"]["string"])
+    alembic_command.upgrade(alembic_cfg, "head")
 
 async def prep_valkey():
     # TODO: Make it a loop over a dict of indexes and schemas
