@@ -119,6 +119,8 @@ async def token(db_session: SessionDep, request: Request, grant_type: str = Form
     if res.total == 1:
         tx_id = res.docs[0]["id"].split(":")[-1]
         tx = Transaction.load("ln-oidc-login", tx_id)
+        if tx is None:
+            raise HTTPException(status_code=500, detail="fuck")
     else:
         raise HTTPException(status_code=400, detail="invalid_grant")
     # Final checks before issuing the ID token
@@ -160,7 +162,7 @@ async def token(db_session: SessionDep, request: Request, grant_type: str = Form
 # TODO: Implement checking scopes
 @router.get("/userinfo", responses={401: {"model": ErrorResponse}})
 def userinfo(authorization: Annotated[str | None, Header(alias="Authorization")] = None):
-    if not authorization.startswith("Bearer "):
+    if authorization is None or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="unauthorized")
     access_token = authorization.removeprefix("Bearer ")
     safe_auth = escape_valkey_tag(access_token)
@@ -169,6 +171,8 @@ def userinfo(authorization: Annotated[str | None, Header(alias="Authorization")]
     if res.total == 1:
         tx_id = res.docs[0]["id"].split(":")[-1]
         tx = Transaction.load("ln-oidc-login", tx_id)
+        if tx is None:
+            raise HTTPException(status_code=500, detail="fuck")
     else:
         raise HTTPException(status_code=401, detail="unauthorized")
     user = tx._private_data["user"]["uid"]
