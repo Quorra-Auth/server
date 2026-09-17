@@ -30,15 +30,22 @@ Quorra is for everyone, but the main target audience are home users and self-hos
 
 ## What about the mobile app?
 
-As a starting point we provide apps for two platforms:
+As a starting point we provide two first-party apps for two platforms:
 
 * [Voucher](https://github.com/k8ieone/voucher) is a client for Linux written in Python and GTK4/Libadwaita
 * [Flare](https://github.com/Quorra-Auth/flare) is a client for Android written in Flutter
 
-We hope developers will pick up development of their own authenticator apps for Quorra.
+Other applications compatible with [LNURL-auth (LUD-04)](https://github.com/lnurl/luds/blob/luds/04.md) should work with Quorra out of the box, just without Quorra-specific features.
 
-The API is documented using OpenAPI and we try to keep it simple. Implementing basic [LNURL-auth (LUD-04)](https://github.com/lnurl/luds/blob/luds/04.md) is enough to make your authenticator application work with Quorra.
+Tested applications that can be used to hold your private keys:
 
+- [Phoenix](https://github.com/ACINQ/phoenix)
+- [BlueWallet](https://github.com/bluewallet/bluewallet)
+- [Zeus](https://github.com/ZeusLN/zeus)
+- [Blixt Wallet](https://blixtwallet.github.io/)
+- [Misty Breez](https://github.com/breez/misty-breez)
+
+We hope developers will pick up development of their own authenticator apps for Quorra. The API is documented using OpenAPI and we try to keep it simple.
 ## How does it work?
 
 Everything in Quorra is based either on short-term random secrets or asymetric encryption. No magic involved.
