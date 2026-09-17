@@ -8,7 +8,7 @@ Quorra is an OIDC compatible IDP (identity provider).
 
 While other providers either use a password, WebAuthn, OTPs or a combination of the three, Quorra uses asymetric encryption. The private key is stored on a device running one of Quorra's keychain apps.
 
-It doesn't aim to be a replacement for other identity providers, instead Quorra is meant to be used *alongisde* other more full-featured IDPs like [Authentik](https://goauthentik.io/), [Zitadel](https://zitadel.com/), [Keyloak](https://keycloak.org/), [Dex](https://dexidp.io/), etc.
+It doesn't aim to be a replacement for other identity providers, instead Quorra is meant to be used *alongside* other more full-featured IDPs like [Authentik](https://goauthentik.io/), [Zitadel](https://zitadel.com/), [Keycloak](https://keycloak.org/), [Dex](https://dexidp.io/), etc.
 
 As such, Quorra only implements a fairly minimal set of OIDC features and doesn't provide any access controls. It wasn't created to plug directly into your applications, it is to be used as an external identity provider for your existing IDP.
 
@@ -16,7 +16,11 @@ For simple use-cases without the need for fine-grained access policies it can be
 
 ## Can I see?
 
-TODO: Add a video
+Sure thing!
+
+![Registration flow](.github/registration.mp4)
+
+![Login flow](.github/login.mp4)
 
 ## Who is it for?
 
