@@ -18,6 +18,8 @@ For simple use-cases without the need for fine-grained access policies it can be
 
 Sure thing!
 
+https://github.com/Quorra-Auth/server/raw/refs/heads/main/.github/login.mp4
+
 ![Registration flow](.github/registration.mp4)
 
 ![Login flow](.github/login.mp4)
