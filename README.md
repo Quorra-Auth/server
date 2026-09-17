@@ -16,13 +16,13 @@ For simple use-cases without the need for fine-grained access policies it can be
 
 ## Can I see?
 
-Sure thing!
+Registration:
 
-https://github.com/Quorra-Auth/server/raw/refs/heads/main/.github/login.mp4
+https://github.com/user-attachments/assets/687c9122-084a-487e-b4b1-2e65ddf03042
 
-![Registration flow](.github/registration.mp4)
+Login:
 
-![Login flow](.github/login.mp4)
+https://github.com/user-attachments/assets/eee12b01-fc50-440f-a4ba-23cb955ddd28
 
 ## Who is it for?
 
