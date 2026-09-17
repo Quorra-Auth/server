@@ -59,3 +59,11 @@ This project is not ready for production use yet and it is too early to start ch
 TODO
 
 If you're ready to start playing with Quorra... TBD
+
+## AI policy?
+
+Well, it's complicated... This is my passion project which means I should have fun and enjoy working on it. Handing it to an LLM just seems wrong.
+
+On the other hand, there are some things that I really just don't enjoy doing. I used an LLM to wire up the [Alembic migrations](quorra/migrations/env.py), to write some of the [JavaScript on the frontend](quorra/fe) (which is just a pure LLM+human garbage dump but it seems to work well enough) and to come up with a [Flutter client](https://github.com/Quorra-Auth/flare).
+
+So like this is not a "No AI" project but it's also not what I'd call AI slop. It's my lovechild that I need help with from time to time.
