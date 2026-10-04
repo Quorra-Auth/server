@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Form, Depends, Header
+from fastapi import APIRouter, Request, Form, Depends
 from fastapi import HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -25,7 +25,7 @@ from ..database import vk
 
 from ..keys import get_jwk
 from ..utils import generate_token, url_encoder, escape_valkey_tag
-
+from ..authendpoint import oidc_auth
 
 security_scheme = HTTPBasic(auto_error=False)
 router = APIRouter()
@@ -72,7 +72,7 @@ async def authorize(client_id: str, redirect_uri: str, state: str, scope: str, c
     if client is None:
         raise HTTPException(status_code=400, detail="Invalid client")
     if redirect_uri not in client["redirect_uris"]:
-        raise HTTPException(status_code=400, detail="Invalid client")
+        raise HTTPException(status_code=400, detail=f"{redirect_uri} is not an allowed redirect URI for {client_id}")
     args = {"client_id": client_id, "redirect_uri": redirect_uri, "state": state, "scope": scope, "client_name": client["friendly_name"]}
     if nonce is not None:
         args["nonce"] = nonce
@@ -122,7 +122,7 @@ async def token(db_session: SessionDep, request: Request, grant_type: str = Form
         if tx is None:
             raise HTTPException(status_code=500, detail="fuck")
     else:
-        raise HTTPException(status_code=400, detail="invalid_grant")
+        raise HTTPException(status_code=500, detail="fuckity fuck")
     # Final checks before issuing the ID token
     client = find_client(client_id)
     if client is None or tx.data["oidc_data"]["client-id"] != client_id:
@@ -161,21 +161,5 @@ async def token(db_session: SessionDep, request: Request, grant_type: str = Form
 
 # TODO: Implement checking scopes
 @router.get("/userinfo", responses={401: {"model": ErrorResponse}})
-def userinfo(authorization: Annotated[str | None, Header(alias="Authorization")] = None):
-    if authorization is None or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="unauthorized")
-    access_token = authorization.removeprefix("Bearer ")
-    safe_auth = escape_valkey_tag(access_token)
-    q = Query(f"@oidc_at:{{{safe_auth}}}")
-    res = vk.ft("idx:oidc_at").search(q)
-    if res.total == 1:
-        tx_id = res.docs[0]["id"].split(":")[-1]
-        tx = Transaction.load("ln-oidc-login", tx_id)
-        if tx is None:
-            raise HTTPException(status_code=500, detail="fuck")
-    else:
-        raise HTTPException(status_code=401, detail="unauthorized")
-    user = tx._private_data["user"]["uid"]
-    client_id = tx.data["oidc_data"]["client-id"]
-    claims = {"sub": user, "aud": client_id, "iss": issuer}
+def userinfo(claims: dict = Security(oidc_auth, scopes=["openid"])):
     return claims
