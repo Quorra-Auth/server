@@ -51,6 +51,11 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Quorra", version=__version__, redoc_url=None, lifespan=lifespan)
 
 
+@app.get("/liveness", include_in_schema=False)
+async def liveness():
+    return {"live": "ok"}
+
+
 @app.get("/health", include_in_schema=False)
 def healthcheck(session: SessionDep):
     # Do some garbage select
