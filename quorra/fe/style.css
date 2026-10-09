@@ -33,7 +33,12 @@ body {
   color: var(--text);
   text-align: center;
 }
-button {
+
+button,
+a.button,
+a.button:visited,
+a.button:active {
+  display: inline-block;
   font-size: 18px;
   padding: 10px 20px;
   background-color: var(--accent);
@@ -42,27 +47,42 @@ button {
   border-radius: 8px;
   cursor: pointer;
   margin: 1rem auto;
+  text-decoration: none;
+  /* width: 90%; */
+  /* box-sizing: border-box; */
 }
-button:hover {
+
+a.button {
+  margin: 0 auto;
+}
+
+button:hover,
+a.button:hover {
   background-color: var(--accent-hover);
 }
+
 a {
   color: var(--accent);
 }
+
 a:visited {
   color: var(--accent-visited-text);
 }
+
 a:active {
   color: var(--accent-active-text);
 }
+
 form {
   display: flex;
   flex-direction: column;
 }
+
 label {
   display: block;
   margin: 1rem 0 0.25rem;
 }
+
 input {
   padding: 0.75rem;
   font-size: 1rem;
@@ -70,12 +90,15 @@ input {
   color: FieldText;
   border-radius: 8px;
   border: 1px solid var(--border);
-  margin-bottom: 1rem;
+  margin: 1rem auto 1rem;
+  width: 90%;
+  box-sizing: border-box;
 }
+
 .step_div {
-  max-width: 400px;
-  min-width: 320px;
-  margin: 10%;
+  box-sizing: border-box;
+  width: min(400px, calc(100vw - 2rem));
+  margin: 1rem;
   padding: 1.25rem;
   background: var(--card);
   box-shadow: var(--shadow);
@@ -83,6 +106,7 @@ input {
   transition: opacity 220ms ease, transform 220ms ease;
   will-change: opacity, transform;
 }
+
 /* Exit animation */
 .step_div.is-exiting {
   opacity: 0;
@@ -94,6 +118,7 @@ input {
   opacity: 0;
   transform: translateY(10px);
 }
+
 #qr {
   width: 90%;
   height: auto;
@@ -101,25 +126,29 @@ input {
   margin: 1rem auto;
   border-radius: 8px;
 }
+
 .hr-text {
   display: flex;
   align-items: center;
   text-align: center;
-  width: 60%;
+  width: 90%;
   margin: 1rem auto;
   color: var(--muted);
 }
+
 .hr-text::before,
 .hr-text::after {
   content: "";
   flex: 1;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid currentColor;
 }
+
 .hr-text span {
   padding: 0 0.5em;
   background: var(--card);
   font-size: 0.9rem;
 }
+
 .hidden {
   display: none;
 }
@@ -131,7 +160,7 @@ input {
     --text: CanvasText;
     --card: color-mix(in srgb, Canvas 92%, white);
     --field-background: color-mix(in srgb, Field 90%, black);
-    --muted: color-mix(in srgb, GrayText 70%, white);
+    --muted: GrayText;
     --border: color-mix(in srgb, GrayText 50%, black);
     --shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
   }

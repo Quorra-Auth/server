@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link rel="stylesheet" href="../style.css"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="../style.css" />
   <title>Quorra Onboarding</title>
 </head>
+
 <body>
   <div id="initial" class="step_div">
     <h1>Welcome to Quorra!</h1>
@@ -13,7 +15,7 @@
     <p>Download one of our <b>keychain</b> apps to get started:</p>
     <p><a href="https://github.com/k8ieone/voucher">Voucher</a> for Linux</p>
     <p><a href="https://github.com/Quorra-Auth/flare">Flare</a> for Android</p>
-    <div class="hr-text"><span>OR</span></div>
+    <div class="hr-text"><span>or</span></div>
     <p>
       You can use your Lightning wallet, <br>
       Quorra is powered by <a target="_blank" rel="noopener" href=https://lightninglogin.live/learn>Lightning</a> ⚡
@@ -26,23 +28,20 @@
     <h3>Some services like to display a name and email</h3>
     <p>Providing this information allows Quorra to pass this information along to your applications.</p>
     <form id="details_form">
-      <label for="username">Username:</label>
-      <input id="username_input" name="username" type="text" required />
+      <input id="username_input" name="username" type="text" placeholder="Username" aria-label="Username" required />
+      <input id="email_input" name="email" type="email" placeholder="Email" aria-label="Email" required />
 
-      <label for="email">Email:</label>
-      <input id="email_input" name="email" type="email" required />
-
-      <button type="submit">Submit</button>
+      <button type="submit">Proceed</button>
     </form>
   </div>
 
   <div id="qr_div" class="hidden step_div">
     <h1>Almost there!</h1>
     <h3>Finish your registration by adding your first device</h3>
-    <p>Scan the below code using your chosen application</p>
-    <img id="qr"/>
-    <div class="hr-text"><span>OR</span></div>
-    <a id="local_link">Use a local application</a>
+    <p>Scan the below code using your device</p>
+    <img id="qr" />
+    <div class="hr-text"><span>or</span></div>
+    <a id="local_link" class="button">Register this device</a>
   </div>
 
   <div id="finished_div" class="hidden step_div">
@@ -54,5 +53,5 @@
   <script src="onboarding.js"></script>
   <script src="../transitions.js"></script>
 </body>
-</html>
 
+</html>
