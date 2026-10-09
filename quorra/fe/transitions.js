@@ -57,4 +57,20 @@ async function showStep(nextId) {
   });
 }
 
+function waitForImage(img) {
+  if (!img.src) return Promise.resolve();
+  return img.decode().catch(() => {});
+}
+
+function revealInitialStep() {
+  const el = document.querySelector(".step_div.is-entering:not(.hidden)");
+  if (!el) return;
+  forceReflow(el);
+  requestAnimationFrame(() => {
+    el.classList.remove("is-entering");
+  });
+}
+
 window.showStep = showStep;
+window.waitForImage = waitForImage;
+window.revealInitialStep = revealInitialStep;

@@ -140,8 +140,9 @@ window.onload = async function() {
   if (providedLink) {
     console.log("This link was user-provided");
   }
-  txId = await startOnboardingTransaction(onboardingLink);
-  // if (started) {
-  //   startOnboarding();
-  // }
+  try {
+    txId = await startOnboardingTransaction(onboardingLink);
+  } finally {
+    revealInitialStep();
+  }
 };

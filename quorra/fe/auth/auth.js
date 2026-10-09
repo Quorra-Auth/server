@@ -1,7 +1,12 @@
 let txId = null;
 
 window.onload = async function() {
-  await startAqr();
+  try {
+    await startAqr();
+  } finally {
+    await waitForImage(qr);
+    revealInitialStep();
+  }
 };
 
 async function findReplace(objClass, text) {
