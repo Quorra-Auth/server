@@ -17,7 +17,7 @@ dependencies = [
     "fastapi",
     "valkey",
     "sqlmodel",
-    "psycopg2",
+    "psycopg",
     "qrcode",
     "uvicorn",
     "cryptography",
