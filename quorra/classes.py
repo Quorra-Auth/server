@@ -1,12 +1,15 @@
 from sqlmodel import Field, SQLModel
 from pydantic import BaseModel, field_serializer, computed_field
 from enum import Enum
-from typing import Literal
+from typing import ClassVar, Literal
 from datetime import datetime
 
 from uuid import uuid4
 
 from .database import vk
+from .utils import escape_valkey_tag
+from .valkey_indexes import register_index, search as vk_search
+from valkey.commands.search.query import Query
 from valkey.commands.json.path import Path
 
 
@@ -64,9 +67,16 @@ class TransactionUpdateRequest(TransactionCreateRequest):
     tx_id: str
     data: dict
 
+class DuplicateTransactionMatch(Exception):
+    pass
+
+
 class Transaction(BaseModel):
     tx_type: TransactionTypes
     tx_id: str | None = None
+
+    # alias -> JSON path. Each (type, alias) gets its own index over this type's keys.
+    indexes: ClassVar[dict[str, str]] = {}
 
     # TODO: shorten
     _expiry: int = 30
@@ -93,6 +103,29 @@ class Transaction(BaseModel):
     @field_serializer("state", "data")
     def serialize_computed_fields(self, value, _info):
         return value
+
+    @classmethod
+    def __pydantic_init_subclass__(cls, **kwargs):
+        super().__pydantic_init_subclass__(**kwargs)
+        tx_type = cls.model_fields["tx_type"].default
+        for alias, path in cls.indexes.items():
+            register_index(tx_type.value, alias, path)
+
+    @classmethod
+    def find_by(cls, alias: str, value: str) -> "Transaction | None":
+        """Look up a transaction of this type by an indexed field.
+        Returns None if nothing matches; raises if the value is ambiguous."""
+        if alias not in cls.indexes:
+            raise ValueError("{} has no index {}".format(cls.__name__, alias))
+        tx_type = cls.model_fields["tx_type"].default
+        q = Query("@{}:{{{}}}".format(alias, escape_valkey_tag(value)))
+        res = vk_search("idx:{}:{}".format(tx_type.value, alias), q)
+        if res.total == 0:
+            return None
+        if res.total > 1:
+            raise DuplicateTransactionMatch("{} matched {} transactions".format(alias, res.total))
+        tx_id = res.docs[0]["id"].split(":", 1)[1]
+        return cls.load(tx_type.value, tx_id)
 
     @classmethod
     def load(cls, tx_type: str, tx_id: str) -> "Transaction | None":
@@ -140,9 +173,15 @@ class OnboardingTransactionStates(str, Enum):
 class OnboardingTransaction(Transaction):
     # TODO: Move transition checks here
     tx_type: TransactionTypes = TransactionTypes.onboarding
+    indexes: ClassVar[dict[str, str]] = {"ln_k1": "$.data.ln.k1"}
 
 class LnOIDCLoginTransaction(Transaction):
     tx_type: TransactionTypes = TransactionTypes.ln_oidc_login
+    indexes: ClassVar[dict[str, str]] = {
+        "ln_k1": "$.data.ln.k1",
+        "oidc_code": "$.data.oidc_data.code",
+        "oidc_at": "$.private.oidc_data.access_token",
+    }
 
 class LnOIDCLoginTransactionStates(str, Enum):
     created = "created"

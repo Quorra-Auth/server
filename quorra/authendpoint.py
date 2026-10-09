@@ -3,11 +3,8 @@ from os import O_LARGEFILE
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2AuthorizationCodeBearer, SecurityScopes
 from typing import Annotated
-from valkey.commands.search.query import Query
-from .utils import escape_valkey_tag
-from .database import vk
 from .classes import (
-    Transaction
+    LnOIDCLoginTransaction
 )
 from .config import server_url
 
@@ -24,15 +21,8 @@ oauth2_scheme = OAuth2AuthorizationCodeBearer(
 )
 
 def oidc_auth(security_scopes: SecurityScopes, access_token: str = Depends(oauth2_scheme)):
-    safe_auth = escape_valkey_tag(access_token)
-    q = Query(f"@oidc_at:{{{safe_auth}}}")
-    res = vk.ft("idx:oidc_at").search(q)
-    if res.total == 1:
-        tx_id = res.docs[0]["id"].split(":")[-1]
-        tx = Transaction.load("ln-oidc-login", tx_id)
-        if tx is None:
-            raise HTTPException(status_code=500, detail="fuck")
-    else:
+    tx = LnOIDCLoginTransaction.find_by("oidc_at", access_token)
+    if tx is None:
         raise HTTPException(status_code=401, detail="unauthorized")
     user = tx._private_data["user"]["uid"]
     client_id = tx.data["oidc_data"]["client-id"]

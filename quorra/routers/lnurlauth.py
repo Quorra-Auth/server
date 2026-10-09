@@ -15,7 +15,7 @@ from sqlalchemy.exc import IntegrityError
 
 from ..classes import (
     User, Device,
-    Transaction, TransactionTypes,
+    Transaction, TransactionTypes, OnboardingTransaction, LnOIDCLoginTransaction,
     ErrorResponse, QRDataResponse, LNStatusResponse, LNStatusEnum
 )
 
@@ -30,15 +30,12 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from cryptography.exceptions import InvalidSignature
 
-from valkey.commands.search.query import Query
-
 from .oidc import store_oidc_code
 
 from ..database import SessionDep
 from ..database import vk
 
 from ..utils import generate_qr
-from ..utils import escape_valkey_tag
 from ..utils import generate_qr
 from ..config import server_url
 
@@ -62,12 +59,8 @@ async def ln_register(session: SessionDep, k1: str, tag: str, sig: str, key: str
     """Finishes device registration."""
     if not await verify_signature(k1, sig, key):
         raise HTTPException(status_code=403, detail="Invalid signature")
-    safe_k1 = escape_valkey_tag(k1)
-    q = Query(f"@ln_k1:{{{safe_k1}}}")
-    res = vk.ft("idx:ln_k1").search(q)
-    if res.total == 1:
-        tx_id = res.docs[0]["id"].split(":")[-1]
-        tx = Transaction.load(TransactionTypes.onboarding.value, tx_id)
+    tx = OnboardingTransaction.find_by("ln_k1", k1)
+    if tx is not None:
         # OPTION 1 - new user registration - transaction data contains the entry object
         if "entry" in tx._private_data:
             user_details = tx._private_data["entry"]
@@ -103,12 +96,8 @@ async def ln_register(session: SessionDep, k1: str, tag: str, sig: str, key: str
 async def ln_authenticate(session: SessionDep, k1: str, tag: str, sig: str, key: str, action: str | None = None) -> LNStatusResponse:
     if not await verify_signature(k1, sig, key):
         raise HTTPException(status_code=403, detail="Invalid signature")
-    safe_k1 = escape_valkey_tag(k1)
-    q = Query(f"@ln_k1:{{{safe_k1}}}")
-    res = vk.ft("idx:ln_k1").search(q)
-    if res.total == 1:
-        tx_id = res.docs[0]["id"].split(":")[-1]
-        tx = Transaction.load(TransactionTypes.ln_oidc_login.value, tx_id)
+    tx = LnOIDCLoginTransaction.find_by("ln_k1", k1)
+    if tx is not None:
         # TODO: Exception handling here
         # could be that a valid signature is presented but the device doesn't exist
         device = session.exec(select(Device).where(Device.pubkey == key)).one()

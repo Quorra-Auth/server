@@ -14,17 +14,15 @@ from typing import Annotated, Literal
 from ..config import server_url, oidc_clients
 
 from ..classes import (
-    User, Transaction,
+    User, Transaction, LnOIDCLoginTransaction,
     TokenResponse, ErrorResponse
 )
-
-from valkey.commands.search.query import Query
 
 from ..database import SessionDep
 from ..database import vk
 
 from ..keys import get_jwk
-from ..utils import generate_token, url_encoder, escape_valkey_tag
+from ..utils import generate_token, url_encoder
 from ..authendpoint import oidc_auth
 
 security_scheme = HTTPBasic(auto_error=False)
@@ -113,15 +111,8 @@ async def token(db_session: SessionDep, request: Request, grant_type: str = Form
         raise HTTPException(status_code=400, detail="invalid_grant")
     client_id, client_secret = creds
     # Look up the transaction if initial checks pass
-    safe_code = escape_valkey_tag(code)
-    q = Query(f"@oidc_code:{{{safe_code}}}")
-    res = vk.ft("idx:oidc_code").search(q)
-    if res.total == 1:
-        tx_id = res.docs[0]["id"].split(":")[-1]
-        tx = Transaction.load("ln-oidc-login", tx_id)
-        if tx is None:
-            raise HTTPException(status_code=500, detail="fuck")
-    else:
+    tx = LnOIDCLoginTransaction.find_by("oidc_code", code)
+    if tx is None:
         raise HTTPException(status_code=500, detail="fuckity fuck")
     # Final checks before issuing the ID token
     client = find_client(client_id)

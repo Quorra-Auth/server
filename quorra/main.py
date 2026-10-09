@@ -20,9 +20,7 @@ from .routers import (
 from .database import engine, SessionDep, vk
 from .config import config as quorra_config
 
-from valkey.exceptions import ResponseError
-from valkey.commands.search.field import TagField
-from valkey.commands.search.indexDefinition import IndexDefinition, IndexType
+from .valkey_indexes import ensure_indexes_with_retry
 
 async def migrate():
     migrations_dir = importlib.resources.files("quorra") / "migrations"
@@ -32,60 +30,9 @@ async def migrate():
     alembic_command.upgrade(alembic_cfg, "head")
 
 async def prep_valkey():
-    # TODO: Make it a loop over a dict of indexes and schemas
     # TODO: Error handling and a friendly message when missing JSON/Search modules
-    print("Creating indexes in Valkey...")
-    await create_drt_index()
-    await create_oidc_code_index()
-    await create_oidc_at_index()
-
-async def create_drt_index():
-    idx = vk.ft("idx:ln_k1")
-    schema = (TagField("$.data.ln.k1", as_name="ln_k1"))
-    try:
-        idx.info()
-    except ResponseError:
-        idx.create_index(
-            schema,
-            definition=IndexDefinition(
-                prefix=["ln-oidc-login:", "onboarding:"],
-                index_type=IndexType.JSON
-            )
-        )
-    info = idx.info()
-    print("{} - {} documents, attributes: {}".format(info["index_name"], info["num_docs"], info["attributes"]))
-
-async def create_oidc_code_index():
-    idx = vk.ft("idx:oidc_code")
-    schema = (TagField("$.data.oidc_data.code", as_name="oidc_code"))
-    try:
-        idx.info()
-    except ResponseError:
-        idx.create_index(
-            schema,
-            definition=IndexDefinition(
-                prefix=["ln-oidc-login:"],
-                index_type=IndexType.JSON
-            )
-        )
-    info = idx.info()
-    print("{} - {} documents, attributes: {}".format(info["index_name"], info["num_docs"], info["attributes"]))
-
-async def create_oidc_at_index():
-    idx = vk.ft("idx:oidc_at")
-    schema = (TagField("$.private.oidc_data.access_token", as_name="oidc_at"))
-    try:
-        idx.info()
-    except ResponseError:
-        idx.create_index(
-            schema,
-            definition=IndexDefinition(
-                prefix=["ln-oidc-login:"],
-                index_type=IndexType.JSON
-            )
-        )
-    info = idx.info()
-    print("{} - {} documents, attributes: {}".format(info["index_name"], info["num_docs"], info["attributes"]))
+    print("Ensuring Valkey indexes...")
+    ensure_indexes_with_retry()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
