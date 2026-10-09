@@ -63,7 +63,7 @@ def jwks():
 
 
 @router.get("/authorize", status_code=307, responses={400: {"model": ErrorResponse}})
-async def authorize(client_id: str, redirect_uri: str, state: str, scope: str, code_challenge: str | None = None, code_challenge_method: Literal["S256"] | None = None, nonce: str | None = None, response_type: str = "code") -> RedirectResponse:
+def authorize(client_id: str, redirect_uri: str, state: str, scope: str, code_challenge: str | None = None, code_challenge_method: Literal["S256"] | None = None, nonce: str | None = None, response_type: str = "code") -> RedirectResponse:
     if "openid" not in scope:
         raise HTTPException(status_code=400, detail="The 'openid' scope is always required")
     client = find_client(client_id)
@@ -99,13 +99,13 @@ def get_client_credentials(
     return form_client_id, form_client_secret
 
 
-async def store_oidc_code(tx: Transaction):
+def store_oidc_code(tx: Transaction):
     code: str = str(uuid4())
     tx.add_data(".oidc_data.code", code)
 
 
 @router.post("/token", responses={400: {"model": ErrorResponse}, 401: {"model": ErrorResponse}})
-async def token(db_session: SessionDep, request: Request, grant_type: str = Form(...), code: str = Form(...), code_verifier: str | None = Form(None), creds: tuple[str, str] | tuple[str, None] = Depends(get_client_credentials)) -> TokenResponse:
+def token(db_session: SessionDep, request: Request, grant_type: str = Form(...), code: str = Form(...), code_verifier: str | None = Form(None), creds: tuple[str, str] | tuple[str, None] = Depends(get_client_credentials)) -> TokenResponse:
     # Other grants are not supported
     if grant_type != "authorization_code":
         raise HTTPException(status_code=400, detail="invalid_grant")

@@ -24,7 +24,7 @@ from ..config import config
 router = APIRouter()
 
 @router.get("/create", status_code=201, responses={403: {"model": ErrorResponse}})
-async def create(session: SessionDep, x_self_service_token: Annotated[str | None, Header()] = None) -> OnboardingLink:
+def create(session: SessionDep, x_self_service_token: Annotated[str | None, Header()] = None) -> OnboardingLink:
     authenticated: bool = False
     # Bypass for when self-registrations are open
     if config["server"]["registrations"]:
@@ -45,7 +45,7 @@ async def create(session: SessionDep, x_self_service_token: Annotated[str | None
     return link
 
 @router.post("/init", responses={404: {"model": ErrorResponse}})
-async def init(req: RegistrationRequest, session: SessionDep) -> OnboardingTransaction:
+def init(req: RegistrationRequest, session: SessionDep) -> OnboardingTransaction:
     """Checks the validity of the onboaring link and starts an onboarding transaction"""
     l = session.get(OnboardingLink, req.link_id)
     if not l:

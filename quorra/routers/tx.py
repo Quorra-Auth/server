@@ -28,7 +28,7 @@ router = APIRouter()
 
 
 @router.post("/transaction", status_code=200, response_model=Transaction, responses={401: {"model": ErrorResponse}, 403: {"model": ErrorResponse}, 404: {"model": ErrorResponse}})
-async def get_transaction(rq: TransactionGetRequest) -> Transaction:
+def get_transaction(rq: TransactionGetRequest) -> Transaction:
     """Get and prolong a transaction."""
     # TODO: Prolong tokens and separate endpoint for prolonging transactions
     tx = Transaction.load(rq.tx_type.value, rq.tx_id)

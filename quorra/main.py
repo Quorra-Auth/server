@@ -22,14 +22,14 @@ from .config import config as quorra_config
 
 from .valkey_indexes import ensure_indexes_with_retry
 
-async def migrate():
+def migrate():
     migrations_dir = importlib.resources.files("quorra") / "migrations"
     alembic_cfg = AlembicConfig()
     alembic_cfg.set_main_option("script_location", str(migrations_dir))
     alembic_cfg.set_main_option("sqlalchemy.url", quorra_config["database"]["sql"]["string"])
     alembic_command.upgrade(alembic_cfg, "head")
 
-async def prep_valkey():
+def prep_valkey():
     # TODO: Error handling and a friendly message when missing JSON/Search modules
     print("Ensuring Valkey indexes...")
     ensure_indexes_with_retry()
@@ -37,8 +37,8 @@ async def prep_valkey():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Running migrations")
-    await migrate()
-    await prep_valkey()
+    migrate()
+    prep_valkey()
     yield
     print("Main lifespan done")
 
@@ -48,7 +48,7 @@ app = FastAPI(title="Quorra", version=__version__, redoc_url=None, lifespan=life
 
 
 @app.get("/health", include_in_schema=False)
-async def healthcheck(session: SessionDep):
+def healthcheck(session: SessionDep):
     # Do some garbage select
     session.exec(select(1)).first()
     vk.ping()

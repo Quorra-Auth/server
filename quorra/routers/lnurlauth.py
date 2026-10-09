@@ -41,7 +41,7 @@ from ..config import server_url
 
 router = APIRouter()
 
-async def verify_signature(k1: str, sig: str, key: str) -> bool:
+def verify_signature(k1: str, sig: str, key: str) -> bool:
     pubkey_bytes = bytes.fromhex(key)
     pubkey = EllipticCurvePublicKey.from_encoded_point(SECP256K1(), pubkey_bytes)
     k1_bytes = bytes.fromhex(k1)
@@ -55,9 +55,9 @@ async def verify_signature(k1: str, sig: str, key: str) -> bool:
 
 # TODO: Correct error response
 @router.get("/register", response_model=None, responses={403: {"model": ErrorResponse}})
-async def ln_register(session: SessionDep, k1: str, tag: str, sig: str, key: str, action: str | None = None) -> LNStatusResponse:
+def ln_register(session: SessionDep, k1: str, tag: str, sig: str, key: str, action: str | None = None) -> LNStatusResponse:
     """Finishes device registration."""
-    if not await verify_signature(k1, sig, key):
+    if not verify_signature(k1, sig, key):
         raise HTTPException(status_code=403, detail="Invalid signature")
     tx = OnboardingTransaction.find_by("ln_k1", k1)
     if tx is not None:
@@ -93,8 +93,8 @@ async def ln_register(session: SessionDep, k1: str, tag: str, sig: str, key: str
 
 # TODO: Correct error response
 @router.get("/authenticate", response_model=None, responses={404: {"model": ErrorResponse}})
-async def ln_authenticate(session: SessionDep, k1: str, tag: str, sig: str, key: str, action: str | None = None) -> LNStatusResponse:
-    if not await verify_signature(k1, sig, key):
+def ln_authenticate(session: SessionDep, k1: str, tag: str, sig: str, key: str, action: str | None = None) -> LNStatusResponse:
+    if not verify_signature(k1, sig, key):
         raise HTTPException(status_code=403, detail="Invalid signature")
     tx = LnOIDCLoginTransaction.find_by("ln_k1", k1)
     if tx is not None:
@@ -103,7 +103,7 @@ async def ln_authenticate(session: SessionDep, k1: str, tag: str, sig: str, key:
         device = session.exec(select(Device).where(Device.pubkey == key)).one()
         user = session.exec(select(User).where(User.id == device.user_id)).one()
         tx.add_private_data(".user", {"uid": user.id, "device-id": device.id})
-        await store_oidc_code(tx)
+        store_oidc_code(tx)
         tx.set_state("confirmed")
     return LNStatusResponse(status=LNStatusEnum.ok)
 

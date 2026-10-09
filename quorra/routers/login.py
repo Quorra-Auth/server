@@ -24,7 +24,7 @@ router = APIRouter()
 
 
 @router.get("/start", status_code=201)
-async def login_start(client_id: str, scope: str, nonce: str | None = None, code_challenge: str | None = None, code_challenge_method: Literal["S256"] | None = None) -> Transaction:
+def login_start(client_id: str, scope: str, nonce: str | None = None, code_challenge: str | None = None, code_challenge_method: Literal["S256"] | None = None) -> Transaction:
     """Starts a new login session."""
     if "openid" not in scope:
         raise HTTPException(status_code=400, detail="The 'openid' scope is always required")

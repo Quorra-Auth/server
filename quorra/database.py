@@ -13,7 +13,7 @@ sqlite_url = config["database"]["sql"]["string"]
 engine = create_engine(sqlite_url, echo=False)
 vk = Valkey(host=config["database"]["valkey"]["host"], port=config["database"]["valkey"]["port"], db=config["database"]["valkey"]["db"], decode_responses=True, retry=Retry(ExponentialBackoff(cap=2, base=0.1), 5), retry_on_error=[ConnectionError, TimeoutError], health_check_interval=30)
 
-async def get_session():
+def get_session():
     with Session(engine) as session:
         yield session
 
