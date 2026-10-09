@@ -23,6 +23,10 @@ from .config import config as quorra_config
 from .valkey_indexes import ensure_indexes_with_retry
 
 def migrate():
+    with vk.lock("quorra:migration-lock", timeout=300, blocking_timeout=300):
+        run_alembic_upgrade()
+
+def run_alembic_upgrade():
     migrations_dir = importlib.resources.files("quorra") / "migrations"
     alembic_cfg = AlembicConfig()
     alembic_cfg.set_main_option("script_location", str(migrations_dir))
@@ -37,8 +41,8 @@ def prep_valkey():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Running migrations")
-    migrate()
     prep_valkey()
+    migrate()
     yield
     print("Main lifespan done")
 
