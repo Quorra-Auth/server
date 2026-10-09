@@ -81,24 +81,32 @@ class Transaction(BaseModel):
     # TODO: shorten
     _expiry: int = 30
     _key_name: str | None = None
+    # Per-instance snapshot of the Valkey document (one instance == one request).
+    # Dropped on every write made through this instance.
+    _cache: dict | None = None
 
     def __init__(self, **data):
         super().__init__(**data)
         object.__setattr__(self, "_key_name", "{}:{}".format(self.tx_type.value, self.tx_id))
 
+    def _doc(self) -> dict:
+        if self._cache is None:
+            self._cache = vk.json().get(self._key_name)
+        return self._cache
+
     @computed_field
     @property
     def state(self) -> str:
-        return vk.json().get(self._key_name)["state"]
+        return self._doc()["state"]
 
     @computed_field
     @property
     def data(self) -> dict:
-        return vk.json().get(self._key_name)["data"]
+        return self._doc()["data"]
 
     @property
     def _private_data(self) -> dict:
-        return vk.json().get(self._key_name)["private"]
+        return self._doc()["private"]
 
     @field_serializer("state", "data")
     def serialize_computed_fields(self, value, _info):
@@ -129,9 +137,12 @@ class Transaction(BaseModel):
 
     @classmethod
     def load(cls, tx_type: str, tx_id: str) -> "Transaction | None":
-        if not vk.exists("{}:{}".format(tx_type, tx_id)):
+        tx = cls(tx_id=tx_id, tx_type=tx_type)
+        doc = vk.json().get(tx._key_name)
+        if doc is None:
             return None
-        return cls(tx_id=tx_id, tx_type=tx_type)
+        tx._cache = doc
+        return tx
 
     @classmethod
     def new(cls, tx_type: str) -> "Transaction":
@@ -147,15 +158,19 @@ class Transaction(BaseModel):
     def set_state(self, state):
         if self.check_state_transition(self.state, state):
             vk.json().set(self._key_name, "$.state", state)
+        self._cache = None
 
     def add_data(self, path, data):
         vk.json().set(self._key_name, "$.data{}".format(path), data)
+        self._cache = None
 
     def add_private_data(self, path, data):
         vk.json().set(self._key_name, "$.private{}".format(path), data)
+        self._cache = None
 
     def set_contents(self, contents):
         vk.json().set(self._key_name, Path.root_path(), contents)
+        self._cache = None
 
     def prolong(self, expiry: int | None = None):
         if expiry is None:
